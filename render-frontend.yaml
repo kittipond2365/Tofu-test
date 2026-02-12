@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: badminton-frontend
+    runtime: docker
+    dockerfilePath: ./frontend/Dockerfile.prod
+    dockerContext: ./frontend
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://badminton-backend.onrender.com/api/v1
+      - key: NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC_KEY
+        sync: false
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"
+    healthCheckPath: /health
