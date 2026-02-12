@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Trophy, Clock, Users, Maximize, Minimize, RotateCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -289,6 +289,18 @@ function TVSelector({ onSelect }: { onSelect: (matchId: string) => void }) {
 
 // Main TV Page Component
 export default function TVPage() {
+  return (
+    <Suspense fallback={
+      <div className="h-screen w-screen bg-slate-900 flex items-center justify-center">
+        <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <TVPageInner />
+    </Suspense>
+  );
+}
+
+function TVPageInner() {
   const searchParams = useSearchParams();
   const matchId = searchParams.get('match');
   

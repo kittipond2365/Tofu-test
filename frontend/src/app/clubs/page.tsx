@@ -10,8 +10,8 @@ import { Navbar } from '@/components/layout/navbar';
 import { ClubCard } from '@/components/features/ClubCard';
 import { PageHeader, EmptyState } from '@/components/shared';
 import { ClubCardSkeleton } from '@/components/shared';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import type { ClubResponse } from '@/lib/types';
 
 type SortOption = 'newest' | 'members' | 'alphabetical';

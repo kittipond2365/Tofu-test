@@ -18,7 +18,7 @@ import { ProtectedLayout } from '@/components/layout/protected-layout';
 import { Navbar } from '@/components/layout/navbar';
 import { PageHeader, EmptyState, PageSkeleton } from '@/components/shared';
 import { PlayerStatsRadar } from '@/components/charts';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import type { PlayerStatsResponse } from '@/lib/types';
 
 type TimeFilter = 'all' | 'month' | 'week';

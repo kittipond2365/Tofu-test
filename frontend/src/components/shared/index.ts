@@ -1,6 +1,7 @@
 export { PageHeader } from './PageHeader';
 export { StatsCard } from './StatsCard';
 export { EmptyState } from './EmptyState';
+export { LoadingSkeleton, ChartSkeleton } from './LoadingSkeleton';
 export {
   Skeleton,
   CardSkeleton,
@@ -10,4 +11,4 @@ export {
   PageSkeleton,
   StatsCardSkeleton,
   TableRowSkeleton,
-} from '@/components/ui/Skeleton';
+} from '@/components/ui/skeleton';

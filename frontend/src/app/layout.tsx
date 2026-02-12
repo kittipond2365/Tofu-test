@@ -2,10 +2,10 @@ import './globals.css';
 import { Inter } from 'next/font/google';
 import QueryProvider from '@/providers/query-provider';
 import SocketProvider from '@/providers/socket-provider';
-import { ToastProvider } from '@/components/ui/Toast';
+import { ToastProvider } from '@/components/ui/toast';
 
 const inter = Inter({
-  subsets: ['latin', 'thai'],
+  subsets: ['latin'],
   variable: '--font-inter',
   display: 'swap',
 });

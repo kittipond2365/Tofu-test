@@ -8,7 +8,7 @@ export interface UserResponse { id: string; email: string; full_name: string; di
 export interface ClubResponse { id: string; name: string; slug: string; description?: string; location?: string; max_members: number; is_public: boolean; created_at: string; member_count: number; }
 export interface ClubMemberResponse { id: string; user_id: string; role: UserRole; full_name: string; display_name?: string; avatar_url?: string; matches_in_club: number; rating_in_club: number; joined_at: string; }
 export interface ClubDetailResponse extends ClubResponse { members: ClubMemberResponse[]; }
-export interface SessionResponse { id: string; club_id: string; title: string; description?: string; location: string; start_time: string; end_time: string; max_participants: number; status: SessionStatus; created_by: string; created_at: string; confirmed_count: number; waitlist_count: number; }
+export interface SessionResponse { id: string; club_id: string; title: string; description?: string; location: string; start_time: string; end_time: string; max_participants: number; status: SessionStatus; created_by: string; created_at: string; confirmed_count: number; waitlist_count: number; participant_count?: number; }
 export interface SessionDetailResponse extends SessionResponse { registrations: SessionRegistrationResponse[]; }
 export interface SessionRegistrationResponse { id: string; user_id: string; full_name: string; display_name?: string; status: RegistrationStatus; waitlist_position?: number; checked_in_at?: string; checked_out_at?: string; registered_at: string; }
 export interface PlayerSummary { id: string; full_name: string; display_name?: string; avatar_url?: string; rating: number; }

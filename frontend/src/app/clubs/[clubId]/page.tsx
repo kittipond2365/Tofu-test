@@ -23,7 +23,7 @@ import { Navbar } from '@/components/layout/navbar';
 import { PageHeader, StatsCard, EmptyState, PageSkeleton } from '@/components/shared';
 import { ClubActivityChart } from '@/components/charts';
 import { MemberBadge } from '@/components/features/ClubCard';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import type { ClubMemberResponse } from '@/lib/types';
 
 function getClubGradient(name: string): string {

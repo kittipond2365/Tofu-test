@@ -21,7 +21,7 @@ import { ProtectedLayout } from '@/components/layout/protected-layout';
 import { Navbar } from '@/components/layout/navbar';
 import { SessionCard } from '@/components/features/SessionCard';
 import { PageHeader, EmptyState, SessionCardSkeleton } from '@/components/shared';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import type { SessionResponse, SessionStatus } from '@/lib/types';
 
 type ViewMode = 'list' | 'calendar';

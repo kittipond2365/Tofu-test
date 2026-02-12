@@ -8,7 +8,7 @@ import { apiClient } from '@/lib/api';
 import { ProtectedLayout } from '@/components/layout/protected-layout';
 import { Navbar } from '@/components/layout/navbar';
 import { PageHeader, EmptyState } from '@/components/shared';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import type { MatchResponse } from '@/lib/types';
 
 function LiveMatchCard({ match }: { match: MatchResponse }) {

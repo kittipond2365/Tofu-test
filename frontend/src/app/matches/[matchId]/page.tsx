@@ -17,8 +17,8 @@ import { apiClient } from '@/lib/api';
 import { ProtectedLayout } from '@/components/layout/protected-layout';
 import { Navbar } from '@/components/layout/navbar';
 import { PageHeader, EmptyState, PageSkeleton } from '@/components/shared';
-import { Button } from '@/components/ui/Button';
-import { useToast } from '@/components/ui/Toast';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/toast';
 import type { MatchResponse, MatchStatus } from '@/lib/types';
 
 const statusConfig: Record<

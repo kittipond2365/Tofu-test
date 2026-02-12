@@ -24,10 +24,10 @@ import { Navbar } from '@/components/layout/navbar';
 import { PageHeader, StatsCard } from '@/components/shared';
 import { WinRateChart, RatingTrendChart, MatchesPerMonthChart } from '@/components/charts';
 import { useAuthStore } from '@/stores/authStore';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { EmptyState } from '@/components/shared';
-import { useToast } from '@/components/ui/Toast';
+import { useToast } from '@/components/ui/toast';
 
 interface ProfileUpdateData {
   display_name?: string;
