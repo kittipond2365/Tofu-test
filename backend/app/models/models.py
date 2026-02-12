@@ -3,14 +3,8 @@ from datetime import datetime
 from typing import List, Optional
 from enum import Enum as PyEnum
 
-from sqlalchemy import (
-    Column, String, DateTime, Integer, ForeignKey, 
-    Text, Boolean, Float, Enum, UniqueConstraint
-)
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import declarative_base, relationship
-
-Base = declarative_base()
+from sqlmodel import SQLModel, Field, Relationship
+from sqlalchemy import Column, String, DateTime, Integer, Float, Boolean, Text, Enum, ForeignKey, UniqueConstraint
 
 
 def generate_uuid() -> str:
@@ -49,159 +43,156 @@ class MatchStatus(str, PyEnum):
 
 
 # Models
-class User(Base):
+class User(SQLModel, table=True):
     __tablename__ = "users"
-    
-    id = Column(String(36), primary_key=True, default=generate_uuid)
-    email = Column(String(255), unique=True, nullable=True, index=True)  # Optional for LINE users
-    hashed_password = Column(String(255), nullable=True)  # Null for LINE users
-    full_name = Column(String(255), nullable=False)
-    display_name = Column(String(100), nullable=True)
-    phone = Column(String(20), nullable=True)
-    fcm_token = Column(String(255), nullable=True)  # Firebase Cloud Messaging token
-    line_user_id = Column(String(100), unique=True, nullable=True)  # LINE Login user ID
-    avatar_url = Column(String(500), nullable=True)
-    
+
+    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
+    email: Optional[str] = Field(default=None, max_length=255, unique=True, index=True)
+    hashed_password: Optional[str] = Field(default=None, max_length=255)
+    full_name: str = Field(max_length=255)
+    display_name: Optional[str] = Field(default=None, max_length=100)
+    phone: Optional[str] = Field(default=None, max_length=20)
+    fcm_token: Optional[str] = Field(default=None, max_length=255)
+    line_user_id: Optional[str] = Field(default=None, max_length=100, unique=True)
+    avatar_url: Optional[str] = Field(default=None, max_length=500)
+
     # Player stats summary
-    total_matches = Column(Integer, default=0)
-    wins = Column(Integer, default=0)
-    losses = Column(Integer, default=0)
-    rating = Column(Float, default=1000.0)
-    
-    is_active = Column(Boolean, default=True)
-    is_verified = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+    total_matches: int = Field(default=0)
+    wins: int = Field(default=0)
+    losses: int = Field(default=0)
+    rating: float = Field(default=1000.0)
+
+    is_active: bool = Field(default=True)
+    is_verified: bool = Field(default=False)
+    created_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow))
+    updated_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow))
+
     # Relationships
-    club_memberships = relationship("ClubMember", back_populates="user", cascade="all, delete-orphan")
-    registrations = relationship("SessionRegistration", back_populates="user", cascade="all, delete-orphan")
+    club_memberships: List["ClubMember"] = Relationship(back_populates="user", cascade_delete=True)
+    registrations: List["SessionRegistration"] = Relationship(back_populates="user", cascade_delete=True)
 
 
-class Club(Base):
+class Club(SQLModel, table=True):
     __tablename__ = "clubs"
-    
-    id = Column(String(36), primary_key=True, default=generate_uuid)
-    name = Column(String(255), nullable=False)
-    slug = Column(String(100), unique=True, nullable=False, index=True)
-    description = Column(Text, nullable=True)
-    location = Column(String(500), nullable=True)
-    
+
+    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
+    name: str = Field(max_length=255)
+    slug: str = Field(max_length=100, unique=True, index=True)
+    description: Optional[str] = Field(default=None, sa_column=Column(Text, nullable=True))
+    location: Optional[str] = Field(default=None, max_length=500)
+
     # Settings
-    max_members = Column(Integer, default=100)
-    is_public = Column(Boolean, default=False)  # False = invite only
-    
+    max_members: int = Field(default=100)
+    is_public: bool = Field(default=False)
+
     # LINE Notify
-    line_notify_token = Column(String(255), nullable=True)
-    
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+    line_notify_token: Optional[str] = Field(default=None, max_length=255)
+
+    created_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow))
+    updated_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow))
+
     # Relationships
-    members = relationship("ClubMember", back_populates="club", cascade="all, delete-orphan")
-    sessions = relationship("Session", back_populates="club", cascade="all, delete-orphan")
+    members: List["ClubMember"] = Relationship(back_populates="club", cascade_delete=True)
+    sessions: List["Session"] = Relationship(back_populates="club", cascade_delete=True)
 
 
-class ClubMember(Base):
+class ClubMember(SQLModel, table=True):
     __tablename__ = "club_members"
-    
-    id = Column(String(36), primary_key=True, default=generate_uuid)
-    club_id = Column(String(36), ForeignKey("clubs.id"), nullable=False)
-    user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
-    role = Column(Enum(UserRole), default=UserRole.MEMBER)
-    
-    # Club-specific stats
-    matches_in_club = Column(Integer, default=0)
-    wins_in_club = Column(Integer, default=0)
-    rating_in_club = Column(Float, default=1000.0)
-    
-    joined_at = Column(DateTime, default=datetime.utcnow)
-    
-    # Relationships
-    club = relationship("Club", back_populates="members")
-    user = relationship("User", back_populates="club_memberships")
-    
     __table_args__ = (
         UniqueConstraint('club_id', 'user_id', name='uq_club_member'),
     )
 
+    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
+    club_id: str = Field(foreign_key="clubs.id", max_length=36)
+    user_id: str = Field(foreign_key="users.id", max_length=36)
+    role: Optional[UserRole] = Field(default=UserRole.MEMBER, sa_column=Column(Enum(UserRole), default=UserRole.MEMBER))
 
-class Session(Base):
+    # Club-specific stats
+    matches_in_club: int = Field(default=0)
+    wins_in_club: int = Field(default=0)
+    rating_in_club: float = Field(default=1000.0)
+
+    joined_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow))
+
+    # Relationships
+    club: Optional[Club] = Relationship(back_populates="members")
+    user: Optional[User] = Relationship(back_populates="club_memberships")
+
+
+class Session(SQLModel, table=True):
     __tablename__ = "sessions"
-    
-    id = Column(String(36), primary_key=True, default=generate_uuid)
-    club_id = Column(String(36), ForeignKey("clubs.id"), nullable=False)
-    
-    title = Column(String(255), nullable=False)
-    description = Column(Text, nullable=True)
-    location = Column(String(500), nullable=False)
-    
-    start_time = Column(DateTime, nullable=False)
-    end_time = Column(DateTime, nullable=False)
-    
-    max_participants = Column(Integer, default=20)
-    status = Column(Enum(SessionStatus), default=SessionStatus.DRAFT)
-    
-    created_by = Column(String(36), ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
+    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
+    club_id: str = Field(foreign_key="clubs.id", max_length=36)
+
+    title: str = Field(max_length=255)
+    description: Optional[str] = Field(default=None, sa_column=Column(Text, nullable=True))
+    location: str = Field(max_length=500)
+
+    start_time: datetime
+    end_time: datetime
+
+    max_participants: int = Field(default=20)
+    status: Optional[SessionStatus] = Field(default=SessionStatus.DRAFT, sa_column=Column(Enum(SessionStatus), default=SessionStatus.DRAFT))
+
+    created_by: str = Field(foreign_key="users.id", max_length=36)
+    created_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow))
+    updated_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow))
+
     # Relationships
-    club = relationship("Club", back_populates="sessions")
-    registrations = relationship("SessionRegistration", back_populates="session", cascade="all, delete-orphan")
-    matches = relationship("Match", back_populates="session", cascade="all, delete-orphan")
+    club: Optional[Club] = Relationship(back_populates="sessions")
+    registrations: List["SessionRegistration"] = Relationship(back_populates="session", cascade_delete=True)
+    matches: List["Match"] = Relationship(back_populates="session", cascade_delete=True)
 
 
-class SessionRegistration(Base):
+class SessionRegistration(SQLModel, table=True):
     __tablename__ = "session_registrations"
-    
-    id = Column(String(36), primary_key=True, default=generate_uuid)
-    session_id = Column(String(36), ForeignKey("sessions.id"), nullable=False)
-    user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
-    
-    status = Column(Enum(RegistrationStatus), default=RegistrationStatus.CONFIRMED)
-    waitlist_position = Column(Integer, nullable=True)  # NULL if confirmed
-    
-    checked_in_at = Column(DateTime, nullable=True)
-    checked_out_at = Column(DateTime, nullable=True)
-    
-    registered_at = Column(DateTime, default=datetime.utcnow)
-    
-    # Relationships
-    session = relationship("Session", back_populates="registrations")
-    user = relationship("User", back_populates="registrations")
-    
     __table_args__ = (
         UniqueConstraint('session_id', 'user_id', name='uq_session_registration'),
     )
 
+    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
+    session_id: str = Field(foreign_key="sessions.id", max_length=36)
+    user_id: str = Field(foreign_key="users.id", max_length=36)
 
-class Match(Base):
-    __tablename__ = "matches"
-    
-    id = Column(String(36), primary_key=True, default=generate_uuid)
-    session_id = Column(String(36), ForeignKey("sessions.id"), nullable=False)
-    
-    court_number = Column(Integer, default=1)
-    
-    # Team A
-    team_a_player_1_id = Column(String(36), ForeignKey("users.id"), nullable=False)
-    team_a_player_2_id = Column(String(36), ForeignKey("users.id"), nullable=True)  # NULL for singles
-    
-    # Team B
-    team_b_player_1_id = Column(String(36), ForeignKey("users.id"), nullable=False)
-    team_b_player_2_id = Column(String(36), ForeignKey("users.id"), nullable=True)  # NULL for singles
-    
-    # Scores (stored as JSON-like string for flexibility)
-    # Format: "21-19,18-21,21-15" for best of 3
-    score = Column(String(50), nullable=True)
-    winner_team = Column(String(1), nullable=True)  # 'A' or 'B'
-    
-    status = Column(Enum(MatchStatus), default=MatchStatus.SCHEDULED)
-    
-    started_at = Column(DateTime, nullable=True)
-    completed_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    
+    status: Optional[RegistrationStatus] = Field(default=RegistrationStatus.CONFIRMED, sa_column=Column(Enum(RegistrationStatus), default=RegistrationStatus.CONFIRMED))
+    waitlist_position: Optional[int] = Field(default=None)
+
+    checked_in_at: Optional[datetime] = Field(default=None)
+    checked_out_at: Optional[datetime] = Field(default=None)
+
+    registered_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow))
+
     # Relationships
-    session = relationship("Session", back_populates="matches")
+    session: Optional[Session] = Relationship(back_populates="registrations")
+    user: Optional[User] = Relationship(back_populates="registrations")
+
+
+class Match(SQLModel, table=True):
+    __tablename__ = "matches"
+
+    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
+    session_id: str = Field(foreign_key="sessions.id", max_length=36)
+
+    court_number: int = Field(default=1)
+
+    # Team A
+    team_a_player_1_id: str = Field(foreign_key="users.id", max_length=36)
+    team_a_player_2_id: Optional[str] = Field(default=None, foreign_key="users.id", max_length=36)
+
+    # Team B
+    team_b_player_1_id: str = Field(foreign_key="users.id", max_length=36)
+    team_b_player_2_id: Optional[str] = Field(default=None, foreign_key="users.id", max_length=36)
+
+    # Scores
+    score: Optional[str] = Field(default=None, max_length=50)
+    winner_team: Optional[str] = Field(default=None, max_length=1)
+
+    status: Optional[MatchStatus] = Field(default=MatchStatus.SCHEDULED, sa_column=Column(Enum(MatchStatus), default=MatchStatus.SCHEDULED))
+
+    started_at: Optional[datetime] = Field(default=None)
+    completed_at: Optional[datetime] = Field(default=None)
+    created_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow))
+
+    # Relationships
+    session: Optional[Session] = Relationship(back_populates="matches")
