@@ -39,8 +39,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="th" className={inter.variable}>
-      <body className="font-sans antialiased">
+    <html lang="th" className={inter.variable} suppressHydrationWarning style={{ colorScheme: 'light' }}>
+      <head>
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              // Force light mode
+              document.documentElement.style.colorScheme = 'light';
+              document.documentElement.classList.remove('dark');
+            })();
+          `
+        }} />
+      </head>
+      <body className="font-sans antialiased bg-white text-neutral-900">
         <QueryProvider>
           <ToastProvider>
             <SocketProvider />
