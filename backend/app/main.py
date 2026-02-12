@@ -5,6 +5,7 @@ import structlog
 
 from app.core.config import get_settings
 from app.api import auth, users, clubs, sessions, matches, registrations, stats, notifications
+from sqlmodel import SQLModel
 from app.models import models
 from app.core.database import async_engine
 from app.core.redis import get_redis, close_redis
@@ -62,7 +63,7 @@ async def startup_event():
     
     # Create tables (in production, use Alembic migrations instead)
     async with async_engine.begin() as conn:
-        await conn.run_sync(models.Base.metadata.create_all)
+        await conn.run_sync(SQLModel.metadata.create_all)
 
 
 @app.on_event("shutdown")
