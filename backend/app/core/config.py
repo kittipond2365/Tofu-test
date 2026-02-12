@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     
     # CORS - comma-separated string, parsed manually
-    CORS_ORIGINS_STR: str = "http://localhost:3000,http://localhost:3001"
+    CORS_ORIGINS_STR: str = "http://localhost:3000,http://localhost:3001,https://tofubadminton-frontend.onrender.com"
     
     @property
     def CORS_ORIGINS(self) -> List[str]:
@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     # LINE OAuth (Login)
     LINE_CHANNEL_ID: Optional[str] = None
     LINE_CHANNEL_SECRET: Optional[str] = None
-    LINE_REDIRECT_URI: str = "http://localhost:3000/auth/line/callback"
+    LINE_REDIRECT_URI: str = "https://tofubadminton-frontend.onrender.com/auth/line/callback"
     
     # Notifications
     FCM_ENABLED: bool = False
