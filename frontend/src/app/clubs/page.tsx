@@ -70,22 +70,22 @@ export default function ClubsPage() {
       <main className="page-container">
         {/* Header */}
         <PageHeader
-          title="ชมรมแบดมินตัน"
-          subtitle="จัดการชมรมและเข้าร่วมกิจกรรมกับเพื่อนๆ"
-          breadcrumbs={[{ label: 'ชมรม' }]}
+          title="ก๊วนแบดมินตัน"
+          subtitle="จัดการก๊วนแบดและนัดตีกับเพื่อนๆ"
+          breadcrumbs={[{ label: 'ก๊วนแบด' }]}
           action={
             <div className="flex gap-2">
               <Link href="/clubs/join">
                 <Button variant="secondary" className="hidden sm:flex">
                   <Users className="w-4 h-4" />
-                  เข้าร่วมชมรม
+                  เข้าร่วมก๊วน
                 </Button>
               </Link>
               <Link href="/clubs/create">
                 <Button>
                   <Plus className="w-4 h-4" />
-                  <span className="hidden sm:inline">สร้างชมรม</span>
-                  <span className="sm:hidden">สร้าง</span>
+                  <span className="hidden sm:inline">ตั้งก๊วนใหม่</span>
+                  <span className="sm:hidden">ตั้งก๊วน</span>
                 </Button>
               </Link>
             </div>
@@ -97,7 +97,7 @@ export default function ClubsPage() {
           {/* Search */}
           <div className="flex-1">
             <Input
-              placeholder="ค้นหาชมรม..."
+              placeholder="ค้นหาก๊วน..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               leftIcon={<Search className="w-5 h-5" />}
@@ -146,7 +146,7 @@ export default function ClubsPage() {
         {!isLoading && clubs && (
           <div className="flex items-center gap-4 text-sm text-neutral-500 mb-6">
             <span>
-              ทั้งหมด <strong className="text-neutral-900">{filteredClubs.length}</strong> ชมรม
+              ทั้งหมด <strong className="text-neutral-900">{filteredClubs.length}</strong> ก๊วน
             </span>
             {searchTerm && (
               <span className="text-emerald-600">
@@ -184,16 +184,16 @@ export default function ClubsPage() {
         {!isLoading && !error && filteredClubs.length === 0 && (
           <EmptyState
             icon={Search}
-            title={searchTerm ? 'ไม่พบชมรมที่ค้นหา' : 'ยังไม่มีชมรม'}
+            title={searchTerm ? 'ไม่พบก๊วนที่ค้นหา' : 'ยังไม่มีก๊วน'}
             description={
               searchTerm
                 ? 'ลองค้นหาด้วยคำอื่น หรือล้างตัวกรอง'
-                : 'สร้างชมรมแรกของคุณหรือเข้าร่วมชมรมที่มีอยู่'
+                : 'ตั้งก๊วนแบดของคุณ หรือเข้าร่วมก๊วนที่มีอยู่'
             }
             action={
               searchTerm
                 ? undefined
-                : { label: 'สร้างชมรม', href: '/clubs/create' }
+                : { label: 'ตั้งก๊วนใหม่', href: '/clubs/create' }
             }
             actionButton={
               searchTerm ? (

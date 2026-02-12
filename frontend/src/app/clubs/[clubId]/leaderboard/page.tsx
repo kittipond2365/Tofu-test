@@ -124,12 +124,12 @@ export default function LeaderboardPage({ params }: { params: { clubId: string }
       <main className="page-container">
         {/* Header */}
         <PageHeader
-          title="กระดานคะแนน"
-          subtitle={`อันดับผู้เล่นใน ${club?.name || 'ชมรม'}`}
+          title="อันดับ"
+          subtitle={`อันดับผู้เล่นใน ${club?.name || 'ก๊วน'}`}
           breadcrumbs={[
-            { label: 'ชมรม', href: '/clubs' },
+            { label: 'ก๊วน', href: '/clubs' },
             { label: club?.name || '', href: `/clubs/${params.clubId}` },
-            { label: 'กระดานคะแนน' },
+            { label: 'อันดับ' },
           ]}
           action={
             <Link href={`/clubs/${params.clubId}`}>
@@ -165,7 +165,7 @@ export default function LeaderboardPage({ params }: { params: { clubId: string }
           <EmptyState
             icon={Trophy}
             title="ยังไม่มีข้อมูล"
-            description="ยังไม่มีผู้เล่นในกระดานคะแนน"
+            description="ยังไม่มีผู้เล่นในอันดับ"
           />
         ) : (
           <div className="space-y-6">

@@ -6,6 +6,7 @@ from typing import List
 from app.core.database import get_db
 from app.core.security import get_current_user_id
 from app.core.cache import cache_response, invalidate_cache
+from app.core.redis import cache_delete_pattern
 from app.schemas.schemas import (
     ClubCreate, ClubUpdate, ClubResponse, ClubDetailResponse, ClubMemberResponse
 )
@@ -15,7 +16,6 @@ router = APIRouter()
 
 
 @router.post("/clubs", response_model=ClubResponse, status_code=status.HTTP_201_CREATED)
-@invalidate_cache(pattern="clubs:*")
 async def create_club(
     club_data: ClubCreate,
     user_id: str = Depends(get_current_user_id),
@@ -50,11 +50,16 @@ async def create_club(
     )
     db.add(creator_membership)
     
+    # Flush to get the ID and member count
+    await db.flush()
+    
+    # Invalidate clubs cache so list_clubs returns fresh data
+    await cache_delete_pattern("clubs:*")
+    
     return new_club
 
 
 @router.get("/clubs", response_model=List[ClubResponse])
-@cache_response(prefix="clubs", expire=60)  # Cache for 1 minute
 async def list_clubs(
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db)

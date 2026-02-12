@@ -153,9 +153,9 @@ export default function MatchPage({ params }: { params: { matchId: string } }) {
     mutationFn: (winner: 'A' | 'B') => apiClient.completeMatch(params.matchId, winner),
     onSuccess: () => {
       refresh();
-      success('จบการแข่งขันแล้ว', 'ผลการแข่งขันถูกบันทึกแล้ว');
+      success('จบแมทช์แล้ว', 'ผลแมทช์ถูกบันทึกแล้ว');
     },
-    onError: () => showError('เกิดข้อผิดพลาด', 'ไม่สามารถจบการแข่งขันได้'),
+    onError: () => showError('เกิดข้อผิดพลาด', 'ไม่สามารถจบแมทช์ได้'),
   });
 
   const scoreMutation = useMutation({
@@ -192,8 +192,8 @@ export default function MatchPage({ params }: { params: { matchId: string } }) {
         <main className="page-container">
           <EmptyState
             icon={Trophy}
-            title="ไม่พบการแข่งขัน"
-            description="การแข่งขันนี้อาจถูกลบหรือคุณไม่มีสิทธิ์เข้าถึง"
+            title="ไม่พบแมทช์"
+            description="แมทช์นี้อาจถูกลบหรือคุณไม่มีสิทธิ์เข้าถึง"
           />
         </main>
       </ProtectedLayout>
@@ -214,8 +214,8 @@ export default function MatchPage({ params }: { params: { matchId: string } }) {
         {/* Header */}
         <PageHeader
           title={`แมทช์คอร์ท ${match.court_number}`}
-          subtitle="รายละเอียดการแข่งขัน"
-          breadcrumbs={[{ label: 'ชมรม', href: '/clubs' }]}
+          subtitle="รายละเอียดแมทช์"
+          breadcrumbs={[{ label: 'ก๊วน', href: '/clubs' }]}
           action={
             <button onClick={() => window.history.back()} className="btn-secondary flex items-center gap-2">
               <ChevronLeft className="w-4 h-4" />
@@ -243,7 +243,7 @@ export default function MatchPage({ params }: { params: { matchId: string } }) {
             {/* Score Board */}
             <div className="glass-card p-6">
               <h2 className="text-xl font-bold text-neutral-900 mb-4 text-center">
-                คะแนนการแข่งขัน
+                คะแนนแมทช์
               </h2>
 
               <ScoreDisplay score={match.score} />
@@ -284,7 +284,7 @@ export default function MatchPage({ params }: { params: { matchId: string } }) {
                         <CheckCircle className="w-4 h-4 text-blue-600" />
                       </div>
                       <div>
-                        <p className="text-sm text-neutral-900">จบการแข่งขัน</p>
+                        <p className="text-sm text-neutral-900">จบแมทช์</p>
                         <p className="text-xs text-neutral-500">
                           {new Date(match.completed_at).toLocaleString('th-TH')}
                         </p>
@@ -367,7 +367,7 @@ export default function MatchPage({ params }: { params: { matchId: string } }) {
                 {match.status === 'completed' && (
                   <div className="p-4 bg-emerald-50 rounded-xl text-center">
                     <CheckCircle className="w-8 h-8 text-emerald-600 mx-auto mb-2" />
-                    <p className="text-emerald-700 font-semibold">การแข่งขันเสร็จสิ้นแล้ว</p>
+                    <p className="text-emerald-700 font-semibold">แมทช์เสร็จสิ้นแล้ว</p>
                   </div>
                 )}
 

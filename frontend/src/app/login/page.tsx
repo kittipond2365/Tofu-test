@@ -8,26 +8,26 @@ import { apiClient } from '@/lib/api';
 const features = [
   {
     icon: Trophy,
-    title: 'จัดการแข่งขัน',
-    description: 'สร้างและจัดการแมทช์แบดมินตันได้ง่าย',
+    title: 'จัดแมทช์',
+    description: 'จับคู่ตีแบด บันทึกสกอร์ง่ายๆ',
     color: 'from-emerald-500 to-teal-500',
   },
   {
     icon: Users,
-    title: 'ชมรม',
-    description: 'เข้าร่วมและจัดการชมรมของคุณ',
+    title: 'ก๊วนแบด',
+    description: 'ตั้งก๊วน ชวนเพื่อนมาตี',
     color: 'from-blue-500 to-indigo-500',
   },
   {
     icon: Calendar,
-    title: 'นัดหมาย',
-    description: 'จองเวลาและจัดตารางการแข่งขัน',
+    title: 'นัดตี',
+    description: 'เปิดนัด จองสนาม นัดเวลา',
     color: 'from-violet-500 to-purple-500',
   },
   {
     icon: BarChart3,
-    title: 'สถิติ',
-    description: 'ติดตามผลงานและอันดับของคุณ',
+    title: 'สถิติ & อันดับ',
+    description: 'ดูผลงาน เรตติ้ง แพ้ชนะ',
     color: 'from-amber-500 to-orange-500',
   },
 ];
@@ -74,7 +74,7 @@ export default function LoginPage() {
             Tofu Badminton
           </h1>
           <p className="text-neutral-500 text-lg">
-            จัดการชมรมแบดมินตันอย่างมืออาชีพ
+            แอปจัดการก๊วนแบดมินตัน ครบจบในที่เดียว
           </p>
         </div>
 
@@ -126,7 +126,7 @@ export default function LoginPage() {
           </button>
 
           <p className="mt-6 text-center text-sm text-neutral-500">
-            เข้าสู่ระบบเพื่อจัดการชมรมและเข้าร่วมกิจกรรม
+            เข้าสู่ระบบเพื่อจัดการก๊วนและนัดตีแบด
           </p>
         </div>
 

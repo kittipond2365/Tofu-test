@@ -19,8 +19,8 @@ import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
 
 const navItems = [
-  { href: '/clubs', label: 'ชมรม', icon: Users, description: 'ดูชมรมทั้งหมด' },
-  { href: '/profile', label: 'โปรไฟล์', icon: User, description: 'ข้อมูลส่วนตัว' },
+  { href: '/clubs', label: 'ก๊วนแบด', icon: Users, description: 'ดูก๊วนทั้งหมด' },
+  { href: '/profile', label: 'โปรไฟล์', icon: User, description: 'ข้อมูลส่วนตัว & สถิติ' },
 ];
 
 export function Navbar() {

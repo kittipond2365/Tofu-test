@@ -137,7 +137,7 @@ export default function LivePage() {
       <main className="page-container">
         <PageHeader
           title="ถ่ายทอดสด"
-          subtitle="ดูการแข่งขันที่กำลังดำเนินอยู่"
+          subtitle="ดูแมทช์ที่กำลังตีอยู่แบบสด"
           breadcrumbs={[{ label: 'ถ่ายทอดสด' }]}
         />
 
@@ -150,9 +150,9 @@ export default function LivePage() {
         ) : matches.length === 0 ? (
           <EmptyState
             icon={Play}
-            title="ไม่มีการแข่งขันที่กำลังดำเนินอยู่"
-            description="ขณะนี้ไม่มีแมทช์ที่กำลังแข่งขัน"
-            action={{ label: 'ดูกิจกรรมทั้งหมด', href: '/clubs' }}
+            title="ไม่มีแมทช์ที่กำลังตีอยู่"
+            description="ตอนนี้ไม่มีแมทช์ที่กำลังตี"
+            action={{ label: 'ดูก๊วนทั้งหมด', href: '/clubs' }}
           />
         ) : (
           <div className="grid md:grid-cols-2 gap-6">
@@ -168,7 +168,7 @@ export default function LivePage() {
             <div>
               <h3 className="text-lg font-bold text-neutral-900 mb-1">TV Mode</h3>
               <p className="text-neutral-500">
-                แสดงคะแนนการแข่งขันแบบเต็มจอ สำหรับการถ่ายทอดสดหรือแสดงบนจอขนาดใหญ่
+                แสดงสกอร์แบบเต็มจอ สำหรับฉายบนจอใหญ่ที่สนาม
               </p>
             </div>
             <Link href="/tv">

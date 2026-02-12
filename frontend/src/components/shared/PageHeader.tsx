@@ -47,7 +47,7 @@ export function PageHeader({
             className="flex items-center gap-1 hover:text-emerald-600 transition-colors"
           >
             <Home className="w-4 h-4" />
-            <span className="hidden sm:inline">หน้าหลัก</span>
+            <span className="hidden sm:inline">หน้าแรก</span>
           </Link>
           {breadcrumbs.map((crumb, index) => (
             <span key={index} className="flex items-center gap-2">

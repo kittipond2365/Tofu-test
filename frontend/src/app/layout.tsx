@@ -11,9 +11,9 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: 'Tofu Badminton | จัดการชมรมแบดมินตัน',
-  description: 'ระบบจัดการชมรมแบดมินตัน นัดหมาย จัดตารางแข่งขัน และติดตามสถิติ',
-  keywords: 'badminton, แบดมินตัน, ชมรม, sports, กีฬา',
+  title: 'Tofu Badminton | จัดการก๊วนแบดมินตัน',
+  description: 'แอปจัดการก๊วนแบด นัดตี จับคู่แมทช์ บันทึกสกอร์ ดูอันดับ ครบจบในที่เดียว',
+  keywords: 'badminton, แบดมินตัน, ก๊วนแบด, นัดตี, กีฬา',
   authors: [{ name: 'Tofu Badminton' }],
   viewport: {
     width: 'device-width',

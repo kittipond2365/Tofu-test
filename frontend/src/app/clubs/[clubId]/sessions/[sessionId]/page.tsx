@@ -23,7 +23,7 @@ const statusConfig: Record<SessionStatus, {
   draft: { 
     label: 'ร่าง', 
     className: 'bg-gray-100 text-gray-700',
-    description: 'กิจกรรมยังไม่เปิดให้สมัคร'
+    description: 'นัดตียังไม่เปิดให้สมัคร'
   },
   open: { 
     label: 'เปิดรับสมัคร', 
@@ -38,17 +38,17 @@ const statusConfig: Record<SessionStatus, {
   ongoing: { 
     label: 'กำลังแข่ง', 
     className: 'bg-blue-100 text-blue-700',
-    description: 'กิจกรรมกำลังดำเนินอยู่'
+    description: 'นัดตีกำลังดำเนินอยู่'
   },
   completed: { 
     label: 'เสร็จสิ้น', 
     className: 'bg-gray-100 text-gray-700',
-    description: 'กิจกรรมสิ้นสุดแล้ว'
+    description: 'นัดตีสิ้นสุดแล้ว'
   },
   cancelled: { 
     label: 'ยกเลิก', 
     className: 'bg-red-100 text-red-700',
-    description: 'กิจกรรมถูกยกเลิก'
+    description: 'นัดตีถูกยกเลิก'
   },
 };
 
@@ -133,9 +133,9 @@ export default function SessionDetailPage({ params }: { params: { clubId: string
         <main className="page-container">
           <EmptyState
             icon={AlertCircle}
-            title="ไม่พบกิจกรรม"
-            description="กิจกรรมนี้อาจถูกลบหรือคุณไม่มีสิทธิ์เข้าถึง"
-            action={{ label: 'กลับไปหน้ากิจกรรม', href: `/clubs/${params.clubId}/sessions` }}
+            title="ไม่พบนัดตี"
+            description="นัดตีนี้อาจถูกลบหรือคุณไม่มีสิทธิ์เข้าถึง"
+            action={{ label: 'กลับไปหน้านัดตี', href: `/clubs/${params.clubId}/sessions` }}
           />
         </main>
       </ProtectedLayout>
@@ -156,9 +156,9 @@ export default function SessionDetailPage({ params }: { params: { clubId: string
           title={session.title}
           subtitle={club?.name}
           breadcrumbs={[
-            { label: 'ชมรม', href: '/clubs' },
+            { label: 'ก๊วน', href: '/clubs' },
             { label: club?.name || '', href: `/clubs/${params.clubId}` },
-            { label: 'กิจกรรม', href: `/clubs/${params.clubId}/sessions` },
+            { label: 'นัดตี', href: `/clubs/${params.clubId}/sessions` },
             { label: session.title }
           ]}
           action={
@@ -188,7 +188,7 @@ export default function SessionDetailPage({ params }: { params: { clubId: string
             {/* Session Info Card */}
             <div className="card-modern p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                รายละเอียดกิจกรรม
+                รายละเอียดนัดตี
               </h2>
               
               <div className="grid gap-4">
@@ -246,7 +246,7 @@ export default function SessionDetailPage({ params }: { params: { clubId: string
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                   <Trophy className="w-5 h-5 text-amber-500" />
-                  การแข่งขัน
+                  แมทช์
                 </h2>
                 <button
                   onClick={() => createMatchMutation.mutate()}
@@ -272,8 +272,8 @@ export default function SessionDetailPage({ params }: { params: { clubId: string
               ) : (
                 <EmptyState
                   icon={Trophy}
-                  title="ยังไม่มีการแข่งขัน"
-                  description="สร้างแมทช์แรกสำหรับกิจกรรมนี้"
+                  title="ยังไม่มีแมทช์"
+                  description="สร้างแมทช์แรกสำหรับนัดตีนี้"
                 />
               )}
             </div>

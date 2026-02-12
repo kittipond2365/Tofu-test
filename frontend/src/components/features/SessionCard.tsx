@@ -96,7 +96,7 @@ export function SessionCard({ session, clubId }: SessionCardProps) {
               </div>
 
               <p className="text-sm text-neutral-500 mb-3 line-clamp-1">
-                {session.description || 'ไม่มีคำอธิบาย'}
+                {session.description || 'ยังไม่มีรายละเอียด'}
               </p>
 
               {/* Meta info */}

@@ -116,7 +116,7 @@ export function ClubCard({ club, view = 'grid' }: ClubCardProps) {
 
           {/* Description */}
           <p className="text-neutral-600 mb-4 line-clamp-2 text-sm min-h-[40px]">
-            {club.description || 'ไม่มีคำอธิบาย'}
+            {club.description || 'ยังไม่มีรายละเอียด'}
           </p>
 
           {/* Stats */}
@@ -137,7 +137,7 @@ export function ClubCard({ club, view = 'grid' }: ClubCardProps) {
           {/* Footer */}
           <div className="flex items-center justify-between pt-4 border-t border-neutral-100">
             <div className="text-xs text-neutral-400">
-              สร้างเมื่อ{' '}
+              เปิดก๊วนเมื่อ{' '}
               {new Date(club.created_at).toLocaleDateString('th-TH', {
                 year: 'numeric',
                 month: 'short',
@@ -146,7 +146,7 @@ export function ClubCard({ club, view = 'grid' }: ClubCardProps) {
             </div>
 
             <span className="flex items-center gap-1 text-sm font-medium text-emerald-600 group-hover:text-emerald-700">
-              เข้าชม
+              ดูก๊วน
               <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </span>
           </div>

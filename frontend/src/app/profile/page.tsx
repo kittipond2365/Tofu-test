@@ -165,7 +165,7 @@ export default function ProfilePage() {
                 {!user?.email && (
                   <div className="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-xl">
                     <p className="text-sm text-amber-700">
-                      เพิ่มอีเมลเพื่อรับการแจ้งเตือนกิจกรรม
+                      เพิ่มอีเมลเพื่อรับแจ้งเตือนนัดตี
                     </p>
                   </div>
                 )}
@@ -322,7 +322,7 @@ export default function ProfilePage() {
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       placeholder="your@email.com"
                       leftIcon={<Mail className="w-5 h-5" />}
-                      helpText="ใช้สำหรับรับการแจ้งเตือน"
+                      helpText="ใช้รับแจ้งเตือนนัดตี"
                     />
 
                     <Input
