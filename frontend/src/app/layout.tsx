@@ -1,0 +1,53 @@
+import './globals.css';
+import { Inter } from 'next/font/google';
+import QueryProvider from '@/providers/query-provider';
+import SocketProvider from '@/providers/socket-provider';
+import { ToastProvider } from '@/components/ui/Toast';
+
+const inter = Inter({
+  subsets: ['latin', 'thai'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+export const metadata = {
+  title: 'Tofu Badminton | จัดการชมรมแบดมินตัน',
+  description: 'ระบบจัดการชมรมแบดมินตัน นัดหมาย จัดตารางแข่งขัน และติดตามสถิติ',
+  keywords: 'badminton, แบดมินตัน, ชมรม, sports, กีฬา',
+  authors: [{ name: 'Tofu Badminton' }],
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    viewportFit: 'cover',
+  },
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#10b981' },
+    { media: '(prefers-color-scheme: dark)', color: '#064e3b' },
+  ],
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Tofu Badminton',
+  },
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="th" className={inter.variable}>
+      <body className="font-sans antialiased">
+        <QueryProvider>
+          <ToastProvider>
+            <SocketProvider />
+            {children}
+          </ToastProvider>
+        </QueryProvider>
+      </body>
+    </html>
+  );
+}

@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: badminton_postgres
+    environment:
+      POSTGRES_USER: badminton
+      POSTGRES_PASSWORD: badminton123
+      POSTGRES_DB: badminton_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U badminton"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - badminton_network
+
+  # Redis Cache & Message Queue
+  redis:
+    image: redis:7-alpine
+    container_name: badminton_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - badminton_network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: badminton_backend
+    environment:
+      - DEBUG=true
+      - DATABASE_URL=postgresql+asyncpg://badminton:badminton123@postgres:5432/badminton_db
+      - DATABASE_URL_SYNC=postgresql://badminton:badminton123@postgres:5432/badminton_db
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
+      - LINE_CHANNEL_ID=${LINE_CHANNEL_ID:-}
+      - LINE_CHANNEL_SECRET=${LINE_CHANNEL_SECRET:-}
+      - LINE_REDIRECT_URI=${LINE_REDIRECT_URI:-http://localhost:3000/auth/line/callback}
+      - CORS_ORIGINS_STR=http://localhost:3000,http://frontend:3000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - badminton_network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Frontend Next.js
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: badminton_frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+      - NODE_ENV=development
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - badminton_network
+    command: npm run dev
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  badminton_network:
+    driver: bridge

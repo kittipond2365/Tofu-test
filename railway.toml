@@ -1,0 +1,15 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "backend/Dockerfile"
+
+[deploy]
+startCommand = "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+healthcheckPath = "/health"
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10
+
+[deploy.env]
+DATABASE_URL = "${{Postgres.DATABASE_URL}}"
+DATABASE_URL_SYNC = "${{Postgres.DATABASE_URL}}"
+REDIS_URL = "${{Redis.REDIS_URL}}"
+PYTHONUNBUFFERED = "1"
