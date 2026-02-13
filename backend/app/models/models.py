@@ -55,9 +55,12 @@ class ClubModerator(SQLModel, table=True):
     appointed_by: str = Field(foreign_key="users.id", max_length=36)
     appointed_at: datetime = Field(default_factory=datetime.utcnow)
 
-    # Relationships
-    club: Optional["Club"] = Relationship(back_populates="moderators")
-    user: Optional["User"] = Relationship(back_populates="moderated_clubs")
+    # Simple relationships WITHOUT back_populates (link_model handles the association)
+    club: Optional["Club"] = Relationship()
+    user: Optional["User"] = Relationship()
+    appointed_by_user: Optional["User"] = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "[ClubModerator.appointed_by]"}
+    )
 
 
 class ClubMember(SQLModel, table=True):
@@ -143,7 +146,6 @@ class User(SQLModel, table=True):
         sa_relationship_kwargs={"foreign_keys": "Club.owner_id"}
     )
     moderated_clubs: List["Club"] = Relationship(
-        back_populates="moderators",
         link_model=ClubModerator
     )
 
@@ -185,7 +187,6 @@ class Club(SQLModel, table=True):
     members: List["ClubMember"] = Relationship(back_populates="club", cascade_delete=True)
     sessions: List["Session"] = Relationship(back_populates="club", cascade_delete=True)
     moderators: List["User"] = Relationship(
-        back_populates="moderated_clubs",
         link_model=ClubModerator
     )
 
