@@ -12,6 +12,41 @@ class UserRole(str, Enum):
     MEMBER = "member"
     ADMIN = "admin"
 
+class SessionStatus(str, Enum):
+    UPCOMING = "upcoming"
+    OPEN = "open"
+    FULL = "full"
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+class MatchStatus(str, Enum):
+    SCHEDULED = "scheduled"
+    ONGOING = "ongoing"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+class RegistrationStatus(str, Enum):
+    CONFIRMED = "confirmed"
+    WAITLISTED = "waitlisted"
+    CANCELLED = "cancelled"
+    ATTENDED = "attended"
+
+class PaymentType(str, Enum):
+    SPLIT = "split"
+    PER_SHUTTLE = "per_shuttle"
+    BUFFET = "buffet"
+
+class ClubPrivacy(str, Enum):
+    PUBLIC = "public"
+    PRIVATE = "private"
+
+class MessageType(str, Enum):
+    PAYMENT = "payment"
+    NOTIFICATION = "notification"
+    INVITE = "invite"
+    RESULT = "result"
+
 # ============= LINK TABLES (No relationships, just FKs) =============
 
 class ClubMember(SQLModel, table=True):
