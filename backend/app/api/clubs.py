@@ -65,10 +65,7 @@ async def create_club(
     )
     db.add(creator_membership)
     
-    # Commit transaction before returning
-    await db.commit()
-    
-    # Invalidate clubs cache AFTER commit
+    # Invalidate clubs cache (commit handled by DB dependency)
     await cache_delete_pattern("clubs:*")
     
     return new_club
@@ -92,7 +89,7 @@ async def list_clubs(
     club_responses = []
     for club in clubs:
         count_result = await db.execute(
-            select(func.count(ClubMember.id)).where(ClubMember.club_id == club.id)
+            select(func.count(ClubMember.user_id)).where(ClubMember.club_id == club.id)
         )
         member_count = count_result.scalar()
         
@@ -149,7 +146,7 @@ async def get_club(
             role=member.role,
             full_name=user.full_name,
             display_name=user.display_name,
-            avatar_url=user.avatar_url,
+            avatar_url=user.picture_url,
             matches_in_club=member.matches_in_club,
             rating_in_club=member.rating_in_club,
             joined_at=member.joined_at
@@ -240,7 +237,7 @@ async def join_club(
     
     # Check member limit
     count_result = await db.execute(
-        select(func.count(ClubMember.id)).where(ClubMember.club_id == club_id)
+        select(func.count(ClubMember.user_id)).where(ClubMember.club_id == club_id)
     )
     if count_result.scalar() >= club.max_members:
         raise HTTPException(

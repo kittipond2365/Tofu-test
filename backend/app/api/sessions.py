@@ -88,7 +88,7 @@ async def list_sessions(
     for s in sessions:
         confirmed = (
             await db.execute(
-                select(func.count(SessionRegistration.id)).where(
+                select(func.count()).where(
                     SessionRegistration.session_id == s.id,
                     SessionRegistration.status == RegistrationStatus.CONFIRMED,
                 )
@@ -96,7 +96,7 @@ async def list_sessions(
         ).scalar() or 0
         waitlist = (
             await db.execute(
-                select(func.count(SessionRegistration.id)).where(
+                select(func.count()).where(
                     SessionRegistration.session_id == s.id,
                     SessionRegistration.status == RegistrationStatus.WAITLISTED,
                 )
@@ -131,7 +131,7 @@ async def get_session(
 
     confirmed = (
         await db.execute(
-            select(func.count(SessionRegistration.id)).where(
+            select(func.count()).where(
                 SessionRegistration.session_id == session.id,
                 SessionRegistration.status == RegistrationStatus.CONFIRMED,
             )
@@ -139,7 +139,7 @@ async def get_session(
     ).scalar() or 0
     waitlist = (
         await db.execute(
-            select(func.count(SessionRegistration.id)).where(
+            select(func.count()).where(
                 SessionRegistration.session_id == session.id,
                 SessionRegistration.status == RegistrationStatus.WAITLISTED,
             )

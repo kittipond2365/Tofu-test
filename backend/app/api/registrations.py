@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
@@ -58,7 +58,7 @@ async def register_for_session(
 
     confirmed_count = (
         await db.execute(
-            select(func.count(SessionRegistration.id)).where(
+            select(func.count()).where(
                 SessionRegistration.session_id == session_id,
                 SessionRegistration.status == RegistrationStatus.CONFIRMED,
             )
@@ -84,7 +84,7 @@ async def register_for_session(
     if existing:
         existing.status = status
         existing.waitlist_position = waitlist_position
-        existing.registered_at = datetime.utcnow()
+        existing.registered_at = datetime.now(timezone.utc)
         reg = existing
     else:
         reg = SessionRegistration(
@@ -206,7 +206,7 @@ async def check_in(
     if not reg:
         raise HTTPException(status_code=404, detail="Confirmed registration not found")
 
-    reg.checked_in_at = datetime.utcnow()
+    reg.checked_in_at = datetime.now(timezone.utc)
     reg.status = RegistrationStatus.ATTENDED
     await db.flush()
 
@@ -232,7 +232,7 @@ async def check_out(
     if not reg:
         raise HTTPException(status_code=404, detail="Checked-in registration not found")
 
-    reg.checked_out_at = datetime.utcnow()
+    reg.checked_out_at = datetime.now(timezone.utc)
     await db.flush()
 
     return {"message": "Checked out", "checked_out_at": reg.checked_out_at.isoformat()}

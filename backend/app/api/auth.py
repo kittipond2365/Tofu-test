@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
+import uuid
 
 from app.core.database import get_db
 from app.core.security import (
@@ -24,7 +25,7 @@ class UserCreate(BaseModel):
     full_name: str = Field(..., min_length=1, max_length=255)
     display_name: Optional[str] = Field(None, max_length=100)
     phone: Optional[str] = Field(None, max_length=20)
-    avatar_url: Optional[str] = None
+    picture_url: Optional[str] = None
 
 
 class UserLogin(BaseModel):
@@ -44,13 +45,18 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
         )
     
     # Create new user
+    user_id = str(uuid.uuid4())
+    display_name = user_data.display_name or user_data.full_name
+
     new_user = User(
+        id=user_id,
+        line_user_id=f"email:{user_data.email.lower()}",
         email=user_data.email,
         hashed_password=get_password_hash(user_data.password),
         full_name=user_data.full_name,
-        display_name=user_data.display_name,
+        display_name=display_name,
         phone=user_data.phone,
-        avatar_url=user_data.avatar_url
+        picture_url=user_data.picture_url,
     )
     
     db.add(new_user)
@@ -141,8 +147,8 @@ async def line_callback(
     
     if user:
         # Update avatar if changed
-        if picture_url and user.avatar_url != picture_url:
-            user.avatar_url = picture_url
+        if picture_url and user.picture_url != picture_url:
+            user.picture_url = picture_url
             await db.flush()
         
         # Existing user - generate tokens
@@ -158,13 +164,14 @@ async def line_callback(
     # New user - create account
     # Use LINE display_name as default, user can change later
     new_user = User(
-        email=None,  # No email initially, user can add later
-        hashed_password=None,  # No password for LINE users
+        id=str(uuid.uuid4()),
+        email=None,
+        hashed_password=None,
         full_name=display_name,
         display_name=display_name,
         line_user_id=line_user_id,
-        avatar_url=picture_url,
-        is_verified=True
+        picture_url=picture_url,
+        is_verified=True,
     )
     
     db.add(new_user)

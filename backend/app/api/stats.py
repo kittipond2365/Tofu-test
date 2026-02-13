@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -36,7 +36,7 @@ async def get_club_stats(
     if not club:
         raise HTTPException(status_code=404, detail="Club not found")
 
-    total_members = (await db.execute(select(func.count(ClubMember.id)).where(ClubMember.club_id == club_id))).scalar() or 0
+    total_members = (await db.execute(select(func.count(ClubMember.user_id)).where(ClubMember.club_id == club_id))).scalar() or 0
     total_sessions = (await db.execute(select(func.count(Session.id)).where(Session.club_id == club_id))).scalar() or 0
 
     total_matches = (
@@ -66,7 +66,7 @@ async def get_club_stats(
                 user_id=u.id,
                 full_name=u.full_name,
                 display_name=u.display_name,
-                avatar_url=u.avatar_url,
+                avatar_url=u.picture_url,
                 total_matches=cm.matches_in_club,
                 wins=cm.wins_in_club,
                 losses=losses,
@@ -115,7 +115,7 @@ async def get_leaderboard(
             user_id=u.id,
             full_name=u.full_name,
             display_name=u.display_name,
-            avatar_url=u.avatar_url,
+            avatar_url=u.picture_url,
             total_matches=cm.matches_in_club,
             wins=cm.wins_in_club,
             losses=max(cm.matches_in_club - cm.wins_in_club, 0),
@@ -137,7 +137,7 @@ async def get_user_stats(
     if user_id != current_user_id:
         shared = (
             await db.execute(
-                select(func.count(ClubMember.id))
+                select(func.count())
                 .where(ClubMember.user_id == current_user_id)
                 .where(ClubMember.club_id.in_(select(ClubMember.club_id).where(ClubMember.user_id == user_id)))
             )
@@ -149,7 +149,7 @@ async def get_user_stats(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    start_month = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    start_month = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     matches_this_month = (
         await db.execute(
             select(func.count(Match.id)).where(
@@ -171,7 +171,7 @@ async def get_user_stats(
         user_id=user.id,
         full_name=user.full_name,
         display_name=user.display_name,
-        avatar_url=user.avatar_url,
+        avatar_url=user.picture_url,
         total_matches=user.total_matches,
         wins=user.wins,
         losses=user.losses,
@@ -203,7 +203,7 @@ async def get_player_club_stats(
 
     cm, u = row
 
-    start_month = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    start_month = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     matches_this_month = (
         await db.execute(
             select(func.count(Match.id))
@@ -229,7 +229,7 @@ async def get_player_club_stats(
         user_id=u.id,
         full_name=u.full_name,
         display_name=u.display_name,
-        avatar_url=u.avatar_url,
+        avatar_url=u.picture_url,
         total_matches=cm.matches_in_club,
         wins=cm.wins_in_club,
         losses=losses,

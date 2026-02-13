@@ -13,8 +13,10 @@ class UserRole(str, Enum):
 
 class SessionStatus(str, Enum):
     DRAFT = "draft"
+    UPCOMING = "upcoming"
     OPEN = "open"
     FULL = "full"
+    ACTIVE = "active"
     ONGOING = "ongoing"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
@@ -38,7 +40,7 @@ class MatchStatus(str, Enum):
 # ============= User Schemas =============
 class UserBase(BaseModel):
     email: Optional[EmailStr] = None  # Optional for LINE users
-    full_name: str = Field(..., min_length=1, max_length=255)
+    full_name: Optional[str] = Field(None, min_length=1, max_length=255)
     display_name: Optional[str] = Field(None, max_length=100)
     phone: Optional[str] = Field(None, max_length=20)
     avatar_url: Optional[str] = None
@@ -103,7 +105,7 @@ class ClubUpdate(BaseModel):
 
 
 class ClubMemberResponse(BaseModel):
-    id: str
+    id: int
     user_id: str
     role: UserRole
     full_name: str
@@ -141,9 +143,9 @@ class ClubDetailResponse(ClubResponse):
 class SessionBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
-    location: str = Field(..., min_length=1, max_length=500)
+    location: Optional[str] = Field(None, min_length=1, max_length=500)
     start_time: datetime
-    end_time: datetime
+    end_time: Optional[datetime] = None
     max_participants: int = Field(default=20, ge=1, le=100)
 
 
@@ -162,7 +164,7 @@ class SessionUpdate(BaseModel):
 
 
 class SessionRegistrationResponse(BaseModel):
-    id: str
+    id: int
     user_id: str
     full_name: str
     display_name: Optional[str]
