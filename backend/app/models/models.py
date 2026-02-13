@@ -55,6 +55,10 @@ class ClubModerator(SQLModel, table=True):
     appointed_by: str = Field(foreign_key="users.id", max_length=36)
     appointed_at: datetime = Field(default_factory=datetime.utcnow)
 
+    # Relationships
+    club: Optional["Club"] = Relationship(back_populates="moderators")
+    user: Optional["User"] = Relationship(back_populates="moderated_clubs")
+
 
 class ClubMember(SQLModel, table=True):
     __tablename__ = "club_members"
@@ -74,6 +78,10 @@ class ClubMember(SQLModel, table=True):
 
     joined_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow))
 
+    # Relationships
+    club: Optional["Club"] = Relationship(back_populates="members")
+    user: Optional["User"] = Relationship(back_populates="club_memberships")
+
 
 class SessionRegistration(SQLModel, table=True):
     __tablename__ = "session_registrations"
@@ -92,6 +100,10 @@ class SessionRegistration(SQLModel, table=True):
     checked_out_at: Optional[datetime] = Field(default=None)
 
     registered_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow))
+
+    # Relationships
+    session: Optional["Session"] = Relationship(back_populates="registrations")
+    user: Optional["User"] = Relationship(back_populates="registrations")
 
 
 # Main models
@@ -176,17 +188,6 @@ class Club(SQLModel, table=True):
         back_populates="moderated_clubs",
         link_model=ClubModerator
     )
-
-
-# Back-populated relationships for link models
-ClubMember.club: Optional[Club] = Relationship(back_populates="members")
-ClubMember.user: Optional[User] = Relationship(back_populates="club_memberships")
-
-ClubModerator.club: Optional[Club] = Relationship(back_populates="moderators")
-ClubModerator.user: Optional[User] = Relationship(back_populates="moderated_clubs")
-
-SessionRegistration.session: Optional["Session"] = Relationship(back_populates="registrations")
-SessionRegistration.user: Optional[User] = Relationship(back_populates="registrations")
 
 
 class Session(SQLModel, table=True):
