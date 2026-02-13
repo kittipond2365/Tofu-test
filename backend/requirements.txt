@@ -38,6 +38,8 @@ aiosmtplib>=4.0.0
 python-multipart>=0.0.22
 python-dotenv>=1.2.0
 structlog>=25.0.0
+google-auth>=2.22.0
+google-auth-oauthlib>=1.0.0
 
 # Testing
 pytest>=9.0.0

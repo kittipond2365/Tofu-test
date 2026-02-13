@@ -44,8 +44,11 @@ async def startup_event():
     await get_redis()
     logger.info("Redis connected")
 
-    if cfg.FCM_ENABLED and cfg.FCM_SERVER_KEY:
-        notification_service.configure_push(cfg.FCM_SERVER_KEY)
+    if cfg.FCM_ENABLED:
+        notification_service.configure_push(
+            firebase_project_id=cfg.FIREBASE_PROJECT_ID,
+            fcm_server_key=cfg.FCM_SERVER_KEY,
+        )
 
     if cfg.EMAIL_ENABLED and cfg.SMTP_USER:
         notification_service.configure_email(

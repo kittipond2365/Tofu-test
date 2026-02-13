@@ -63,7 +63,10 @@ class Settings(BaseSettings):
     
     # Notifications
     FCM_ENABLED: bool = False
-    FCM_SERVER_KEY: Optional[str] = None
+    FCM_SERVER_KEY: Optional[str] = None  # legacy fallback
+    FCM_SERVICE_ACCOUNT_JSON: Optional[str] = None
+    FCM_SERVICE_ACCOUNT_PATH: str = "service-account.json"
+    FIREBASE_PROJECT_ID: str = ""
     
     EMAIL_ENABLED: bool = False
     SMTP_HOST: str = "smtp.gmail.com"
