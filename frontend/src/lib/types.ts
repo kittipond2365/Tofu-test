@@ -13,5 +13,7 @@ export interface SessionDetailResponse extends SessionResponse { registrations: 
 export interface SessionRegistrationResponse { id: string; user_id: string; full_name: string; display_name?: string; status: RegistrationStatus; waitlist_position?: number; checked_in_at?: string; checked_out_at?: string; registered_at: string; }
 export interface PlayerSummary { id: string; full_name: string; display_name?: string; avatar_url?: string; rating: number; }
 export interface MatchResponse { id: string; session_id: string; court_number: number; team_a_player_1: PlayerSummary; team_a_player_2?: PlayerSummary; team_b_player_1: PlayerSummary; team_b_player_2?: PlayerSummary; score?: string; winner_team?: string; status: MatchStatus; started_at?: string; completed_at?: string; created_at: string; }
-export interface PlayerStatsResponse { user_id: string; full_name: string; display_name?: string; avatar_url?: string; total_matches: number; wins: number; losses: number; win_rate: number; rating: number; matches_this_month: number; }
+export interface RatingHistoryPoint { date: string; rating: number; matches: number; }
+export interface MatchesPerMonthPoint { month: string; matches: number; }
+export interface PlayerStatsResponse { user_id: string; full_name: string; display_name?: string; avatar_url?: string; total_matches: number; wins: number; losses: number; win_rate: number; rating: number; matches_this_month: number; rating_history?: RatingHistoryPoint[]; matches_per_month?: MatchesPerMonthPoint[]; }
 export interface ClubStatsResponse { club_id: string; club_name: string; total_members: number; total_sessions: number; total_matches: number; top_players: PlayerStatsResponse[]; recent_sessions: SessionResponse[]; }

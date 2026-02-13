@@ -119,6 +119,10 @@ class ClubMemberResponse(BaseModel):
 
 class ClubResponse(ClubBase):
     id: str
+    owner_id: Optional[str] = None
+    is_verified: bool = False
+    verified_by: Optional[str] = None
+    verified_at: Optional[datetime] = None
     created_at: datetime
     member_count: int = 0
     
@@ -252,6 +256,15 @@ class CheckInOutRequest(BaseModel):
 
 
 # ============= Stats Schemas =============
+class RatingHistoryPoint(BaseModel):
+    date: str
+    rating: float
+    matches: int
+
+class MatchesPerMonthPoint(BaseModel):
+    month: str
+    matches: int
+
 class PlayerStatsResponse(BaseModel):
     user_id: str
     full_name: str
@@ -263,6 +276,8 @@ class PlayerStatsResponse(BaseModel):
     win_rate: float  # percentage
     rating: float
     matches_this_month: int = 0
+    rating_history: List[RatingHistoryPoint] = []
+    matches_per_month: List[MatchesPerMonthPoint] = []
 
 
 class ClubStatsResponse(BaseModel):

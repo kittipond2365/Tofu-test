@@ -82,24 +82,9 @@ export default function ProfilePage() {
   const losses = stats?.losses ?? user?.losses ?? 0;
   const rating = stats?.rating ?? user?.rating ?? 1000;
 
-  // Mock data for charts
-  const ratingHistory = [
-    { date: 'ม.ค.', rating: 1000, matches: 5 },
-    { date: 'ก.พ.', rating: 1025, matches: 8 },
-    { date: 'มี.ค.', rating: 1010, matches: 6 },
-    { date: 'เม.ย.', rating: 1045, matches: 10 },
-    { date: 'พ.ค.', rating: 1030, matches: 7 },
-    { date: 'มิ.ย.', rating: rating, matches: stats?.matches_this_month || 0 },
-  ];
-
-  const matchesPerMonth = [
-    { month: 'ม.ค.', matches: 8 },
-    { month: 'ก.พ.', matches: 12 },
-    { month: 'มี.ค.', matches: 10 },
-    { month: 'เม.ย.', matches: 15 },
-    { month: 'พ.ค.', matches: 11 },
-    { month: 'มิ.ย.', matches: stats?.matches_this_month || 0 },
-  ];
+  // Use real API data only - empty arrays for new users
+  const ratingHistory = stats?.rating_history ?? [];
+  const matchesPerMonth = stats?.matches_per_month ?? [];
 
   return (
     <ProtectedLayout>
@@ -264,28 +249,52 @@ export default function ProfilePage() {
                   />
                 </div>
 
-                {/* Charts Row */}
-                <div className="grid md:grid-cols-2 gap-6">
-                  {/* Win Rate Chart */}
-                  <div className="glass-card p-6">
-                    <h3 className="text-lg font-bold text-neutral-900 mb-4">สถิติ ชนะ/แพ้</h3>
-                    <div className="flex justify-center">
-                      <WinRateChart wins={wins} losses={losses} size={200} />
+                {/* Charts Row - Only show if user has played matches */}
+                {totalMatches > 0 ? (
+                  <>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {/* Win Rate Chart */}
+                      <div className="glass-card p-6">
+                        <h3 className="text-lg font-bold text-neutral-900 mb-4">สถิติ ชนะ/แพ้</h3>
+                        <div className="flex justify-center">
+                          <WinRateChart wins={wins} losses={losses} size={200} />
+                        </div>
+                      </div>
+
+                      {/* Rating Trend */}
+                      <div className="glass-card p-6">
+                        <h3 className="text-lg font-bold text-neutral-900 mb-4">แนวโน้ม Rating</h3>
+                        {ratingHistory.length > 0 ? (
+                          <RatingTrendChart data={ratingHistory} height={200} />
+                        ) : (
+                          <div className="h-[200px] flex items-center justify-center text-neutral-400">
+                            ยังไม่มีข้อมูล Rating
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Rating Trend */}
-                  <div className="glass-card p-6">
-                    <h3 className="text-lg font-bold text-neutral-900 mb-4">แนวโน้ม Rating</h3>
-                    <RatingTrendChart data={ratingHistory} height={200} />
+                    {/* Matches Per Month */}
+                    <div className="glass-card p-6">
+                      <h3 className="text-lg font-bold text-neutral-900 mb-4">จำนวนแมทช์ต่อเดือน</h3>
+                      {matchesPerMonth.length > 0 ? (
+                        <MatchesPerMonthChart data={matchesPerMonth} height={250} />
+                      ) : (
+                        <div className="h-[250px] flex items-center justify-center text-neutral-400">
+                          ยังไม่มีข้อมูลแมทช์
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="glass-card p-8 text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-neutral-100 flex items-center justify-center">
+                      <Activity className="w-8 h-8 text-neutral-400" />
+                    </div>
+                    <h3 className="text-lg font-bold text-neutral-900 mb-2">ยังไม่มีประวัติการแข่งขัน</h3>
+                    <p className="text-neutral-500">เข้าร่วมแมทช์แรกของคุณเพื่อดูสถิติและกราฟแสดงผล</p>
                   </div>
-                </div>
-
-                {/* Matches Per Month */}
-                <div className="glass-card p-6">
-                  <h3 className="text-lg font-bold text-neutral-900 mb-4">จำนวนแมทช์ต่อเดือน</h3>
-                  <MatchesPerMonthChart data={matchesPerMonth} height={250} />
-                </div>
+                )}
               </>
             )}
 

@@ -64,12 +64,18 @@ class User(SQLModel, table=True):
 
     is_active: bool = Field(default=True)
     is_verified: bool = Field(default=False)
+    
+    # NEW FIELDS for Phase 1
+    is_super_admin: bool = Field(default=False)
+    
     created_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow))
     updated_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow))
 
     # Relationships
     club_memberships: List["ClubMember"] = Relationship(back_populates="user", cascade_delete=True)
     registrations: List["SessionRegistration"] = Relationship(back_populates="user", cascade_delete=True)
+    owned_clubs: List["Club"] = Relationship(back_populates="owner")
+    moderated_clubs: List["ClubModerator"] = Relationship(back_populates="user")
 
 
 class Club(SQLModel, table=True):
@@ -87,13 +93,25 @@ class Club(SQLModel, table=True):
 
     # LINE Notify
     line_notify_token: Optional[str] = Field(default=None, max_length=255)
+    
+    # NEW FIELDS for Phase 1
+    owner_id: Optional[str] = Field(default=None, foreign_key="users.id", max_length=36)
+    is_verified: bool = Field(default=False)
+    verified_by: Optional[str] = Field(default=None, foreign_key="users.id", max_length=36)
+    verified_at: Optional[datetime] = Field(default=None)
+    
+    # For ownership transfer
+    previous_owner_id: Optional[str] = Field(default=None, foreign_key="users.id", max_length=36)
+    transferred_at: Optional[datetime] = Field(default=None)
 
     created_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow))
     updated_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow))
 
     # Relationships
+    owner: Optional[User] = Relationship(back_populates="owned_clubs")
     members: List["ClubMember"] = Relationship(back_populates="club", cascade_delete=True)
     sessions: List["Session"] = Relationship(back_populates="club", cascade_delete=True)
+    moderators: List["ClubModerator"] = Relationship(back_populates="club")
 
 
 class ClubMember(SQLModel, table=True):
@@ -117,6 +135,23 @@ class ClubMember(SQLModel, table=True):
     # Relationships
     club: Optional[Club] = Relationship(back_populates="members")
     user: Optional[User] = Relationship(back_populates="club_memberships")
+
+
+class ClubModerator(SQLModel, table=True):
+    __tablename__ = "club_moderators"
+    __table_args__ = (
+        UniqueConstraint('club_id', 'user_id', name='uq_club_moderator'),
+    )
+
+    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
+    club_id: str = Field(foreign_key="clubs.id", max_length=36)
+    user_id: str = Field(foreign_key="users.id", max_length=36)
+    appointed_by: str = Field(foreign_key="users.id", max_length=36)
+    appointed_at: datetime = Field(default_factory=datetime.utcnow)
+
+    # Relationships
+    club: Optional[Club] = Relationship(back_populates="moderators")
+    user: Optional[User] = Relationship(back_populates="moderated_clubs")
 
 
 class Session(SQLModel, table=True):

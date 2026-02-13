@@ -30,14 +30,15 @@ async def create_club(
             detail="Club slug already exists"
         )
     
-    # Create club
+    # Create club with owner_id
     new_club = Club(
         name=club_data.name,
         slug=club_data.slug,
         description=club_data.description,
         location=club_data.location,
         max_members=club_data.max_members,
-        is_public=club_data.is_public
+        is_public=club_data.is_public,
+        owner_id=user_id
     )
     db.add(new_club)
     await db.flush()
@@ -50,10 +51,10 @@ async def create_club(
     )
     db.add(creator_membership)
     
-    # Flush to get the ID and member count
-    await db.flush()
+    # Commit transaction before returning
+    await db.commit()
     
-    # Invalidate clubs cache so list_clubs returns fresh data
+    # Invalidate clubs cache AFTER commit
     await cache_delete_pattern("clubs:*")
     
     return new_club
