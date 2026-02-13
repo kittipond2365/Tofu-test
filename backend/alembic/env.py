@@ -2,6 +2,7 @@
 
 """
 from logging.config import fileConfig
+import os
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
@@ -23,10 +24,15 @@ from sqlmodel import SQLModel
 from app.models.models import User, Club, ClubMember, Session, SessionRegistration, Match  # noqa: F401 - ensure models registered
 target_metadata = SQLModel.metadata
 
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
+# Override database URL from environment variable (for Render/production)
+# Render sets DATABASE_URL, we need to use it instead of the hardcoded one
+DATABASE_URL = os.getenv("DATABASE_URL")
+if DATABASE_URL:
+    # Convert asyncpg URL to psycopg2 URL if needed (alembic uses sync driver)
+    if DATABASE_URL.startswith("postgresql+asyncpg://"):
+        DATABASE_URL = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://")
+    config.set_main_option("sqlalchemy.url", DATABASE_URL)
+    print(f"🔄 Using DATABASE_URL from environment: {DATABASE_URL.split('@')[1] if '@' in DATABASE_URL else 'set'}")
 
 
 def run_migrations_offline() -> None:
