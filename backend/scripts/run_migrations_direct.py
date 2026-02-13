@@ -6,11 +6,12 @@ from sqlalchemy.orm import sessionmaker
 # Get and normalize DATABASE_URL
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/badminton_db")
 
-# Ensure sync URL format
+# Ensure sync URL format with psycopg2
 if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg2://", 1)
 elif DATABASE_URL.startswith("postgresql+asyncpg://"):
-    DATABASE_URL = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://", 1)
+    DATABASE_URL = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql+psycopg2://", 1)
+# If already has +psycopg2, keep as is
 
 def migrate():
     print(f"🔄 Connecting to database...")

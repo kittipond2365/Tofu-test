@@ -29,13 +29,15 @@ class Settings(BaseSettings):
     
     @property
     def DATABASE_URL_SYNC(self) -> str:
-        """URL for sync operations (alembic, direct SQL)"""
+        """URL for sync operations (alembic, direct SQL) - uses psycopg2"""
         url = self.DATABASE_URL_RAW
-        # Convert to postgresql:// (no +asyncpg)
+        # Convert to postgresql+psycopg2://
         if url.startswith("postgres://"):
-            url = url.replace("postgres://", "postgresql://", 1)
+            url = url.replace("postgres://", "postgresql+psycopg2://", 1)
+        elif url.startswith("postgresql://") and "+psycopg2" not in url and "+asyncpg" not in url:
+            url = url.replace("postgresql://", "postgresql+psycopg2://", 1)
         elif url.startswith("postgresql+asyncpg://"):
-            url = url.replace("postgresql+asyncpg://", "postgresql://", 1)
+            url = url.replace("postgresql+asyncpg://", "postgresql+psycopg2://", 1)
         return url
     
     # Redis

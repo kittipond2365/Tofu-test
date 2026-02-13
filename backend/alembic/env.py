@@ -28,11 +28,12 @@ target_metadata = SQLModel.metadata
 # Render sets DATABASE_URL, we need to use it instead of the hardcoded one
 DATABASE_URL = os.getenv("DATABASE_URL")
 if DATABASE_URL:
-    # Convert to sync format (remove +asyncpg, convert postgres:// to postgresql://)
+    # Convert to sync format (use psycopg2 driver)
     if DATABASE_URL.startswith("postgresql+asyncpg://"):
-        DATABASE_URL = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://", 1)
+        DATABASE_URL = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql+psycopg2://", 1)
     elif DATABASE_URL.startswith("postgres://"):
-        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg2://", 1)
+    # If already postgresql+psycopg2://, keep as is
     config.set_main_option("sqlalchemy.url", DATABASE_URL)
     print(f"🔄 Using DATABASE_URL from environment: {DATABASE_URL.split('@')[1] if '@' in DATABASE_URL else 'set'}")
 
