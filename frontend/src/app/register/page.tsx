@@ -20,8 +20,8 @@ export default function RegisterPage() {
       setError('กรุณากรอกข้อมูลให้ครบถ้วน');
       return;
     }
-    if (form.password.length < 6) {
-      setError('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
+    if (form.password.length < 8) {
+      setError('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');
       return;
     }
 
@@ -80,7 +80,7 @@ export default function RegisterPage() {
             <Input
               label="รหัสผ่าน"
               type="password"
-              placeholder="อย่างน้อย 6 ตัวอักษร"
+              placeholder="อย่างน้อย 8 ตัวอักษร"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               leftIcon={<Lock className="w-5 h-5" />}

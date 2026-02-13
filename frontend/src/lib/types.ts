@@ -1,5 +1,5 @@
-export type UserRole = 'admin' | 'organizer' | 'member';
-export type SessionStatus = 'draft' | 'open' | 'full' | 'ongoing' | 'completed' | 'cancelled';
+export type UserRole = 'owner' | 'moderator' | 'admin' | 'organizer' | 'member';
+export type SessionStatus = 'draft' | 'upcoming' | 'open' | 'full' | 'active' | 'ongoing' | 'completed' | 'cancelled';
 export type RegistrationStatus = 'confirmed' | 'waitlisted' | 'cancelled' | 'attended' | 'no_show';
 export type MatchStatus = 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
 

@@ -14,7 +14,7 @@ export const apiClient = {
   baseURL: API_URL,
   
   login: async (credentials: { email: string; password: string }): Promise<TokenResponse> => (await api.post('/auth/login', credentials)).data,
-  register: async (data: { email: string; password: string; full_name: string; display_name?: string; phone?: string; avatar_url?: string }): Promise<UserResponse> => (await api.post('/auth/register', data)).data,
+  register: async (data: { email: string; password: string; full_name: string; display_name?: string; phone?: string; picture_url?: string }): Promise<UserResponse> => (await api.post('/auth/register', data)).data,
   getMe: async (): Promise<UserResponse> => (await api.get('/auth/me')).data,
   getMeWithToken: async (token: string): Promise<UserResponse> => {
     const response = await axios.get(`${API_URL}/auth/me`, {

@@ -8,14 +8,20 @@ export default function SocketProvider() {
   useEffect(() => {
     try {
       const s = connectSocket();
-      s.on('registration_update', (payload) => {
+      s.on('registration_updated', (payload) => {
         if (payload?.session_id) qc.invalidateQueries({ queryKey: ['session', payload.session_id] });
       });
-      s.on('match_started', () => {
+      s.on('match_updated', () => {
         qc.invalidateQueries({ queryKey: ['matches'] });
       });
-      s.on('score_update', (payload) => {
+      s.on('score_updated', (payload) => {
         if (payload?.match_id) qc.invalidateQueries({ queryKey: ['match', payload.match_id] });
+      });
+      s.on('player_joined', (payload) => {
+        if (payload?.session_id) qc.invalidateQueries({ queryKey: ['session', payload.session_id] });
+      });
+      s.on('player_left', (payload) => {
+        if (payload?.session_id) qc.invalidateQueries({ queryKey: ['session', payload.session_id] });
       });
       s.on('connect_error', (err) => {
         console.warn('Socket connection error:', err.message);

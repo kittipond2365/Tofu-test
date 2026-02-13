@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from typing import Optional, List
 from enum import Enum
+import uuid
 from sqlmodel import SQLModel, Field, Relationship
 from sqlalchemy import UniqueConstraint, Column, JSON
 
@@ -154,7 +155,7 @@ class User(SQLModel, table=True):
 class Club(SQLModel, table=True):
     __tablename__ = "clubs"
 
-    id: str = Field(primary_key=True)
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
     name: str = Field(index=True)
     slug: str = Field(unique=True, index=True)
     description: Optional[str] = None
@@ -189,7 +190,7 @@ class Club(SQLModel, table=True):
 class Session(SQLModel, table=True):
     __tablename__ = "sessions"
 
-    id: str = Field(primary_key=True)
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
     club_id: str = Field(foreign_key="clubs.id")
     title: str
     description: Optional[str] = None
@@ -219,7 +220,7 @@ class Session(SQLModel, table=True):
 class Match(SQLModel, table=True):
     __tablename__ = "matches"
 
-    id: str = Field(primary_key=True)
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
     session_id: str = Field(foreign_key="sessions.id")
     court_number: int = Field(default=1)
 

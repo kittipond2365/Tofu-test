@@ -48,10 +48,19 @@ class SocketManager:
         await self.sio.emit("registration_updated", payload, room=f"session:{session_id}")
 
     async def broadcast_match_started(self, session_id: str, payload: Dict[str, Any]) -> None:
-        await self.sio.emit("match_started", payload, room=f"session:{session_id}")
+        await self.sio.emit("match_updated", payload, room=f"session:{session_id}")
 
     async def broadcast_score_update(self, session_id: str, payload: Dict[str, Any]) -> None:
         await self.sio.emit("score_updated", payload, room=f"session:{session_id}")
+
+    async def broadcast_match_update(self, session_id: str, payload: Dict[str, Any]) -> None:
+        await self.sio.emit("match_updated", payload, room=f"session:{session_id}")
+
+    async def broadcast_player_joined(self, session_id: str, payload: Dict[str, Any]) -> None:
+        await self.sio.emit("player_joined", payload, room=f"session:{session_id}")
+
+    async def broadcast_player_left(self, session_id: str, payload: Dict[str, Any]) -> None:
+        await self.sio.emit("player_left", payload, room=f"session:{session_id}")
 
 
 socket_manager = SocketManager()

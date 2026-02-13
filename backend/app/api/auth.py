@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -13,6 +13,7 @@ from app.core.security import (
 )
 from app.schemas.schemas import TokenResponse, UserResponse
 from app.models.models import User
+from app.core.oauth_state import store_oauth_state, get_oauth_state
 
 router = APIRouter()
 security = HTTPBearer()
@@ -101,10 +102,12 @@ from app.services.line_oauth import line_oauth_service
 
 
 @router.get("/auth/line/login")
-async def line_login():
+async def line_login(request: Request):
     """Get LINE Login URL"""
     import uuid
     state = str(uuid.uuid4())
+    client_ip = request.client.host if request.client else "unknown"
+    await store_oauth_state(state, client_ip)
     login_url = line_oauth_service.get_login_url(state)
     return {
         "login_url": login_url,
@@ -116,9 +119,26 @@ async def line_login():
 async def line_callback(
     code: str,
     state: str,
+    request: Request,
     db: AsyncSession = Depends(get_db)
 ):
     """LINE OAuth callback - handle LINE login/signup"""
+    # Validate OAuth state (one-time token)
+    stored_ip = await get_oauth_state(state)
+    if not stored_ip:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired OAuth state"
+        )
+
+    # Optional anti-replay/IP consistency check
+    client_ip = request.client.host if request.client else "unknown"
+    if stored_ip != "unknown" and client_ip != stored_ip:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="OAuth state validation failed"
+        )
+
     # Exchange code for token
     token_data = await line_oauth_service.exchange_code_for_token(code)
     if not token_data:

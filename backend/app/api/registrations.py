@@ -107,6 +107,15 @@ async def register_for_session(
             "waitlist_position": waitlist_position,
         },
     )
+    await socket_manager.broadcast_player_joined(
+        session_id=session_id,
+        payload={
+            "session_id": session_id,
+            "user_id": user_id,
+            "status": status,
+            "waitlist_position": waitlist_position,
+        },
+    )
 
     return {
         "message": "Registered",
@@ -180,6 +189,14 @@ async def cancel_registration(
             "session_id": session_id,
             "user_id": user_id,
             "action": "cancelled",
+            "promoted_user_id": promoted_user_id,
+        },
+    )
+    await socket_manager.broadcast_player_left(
+        session_id=session_id,
+        payload={
+            "session_id": session_id,
+            "user_id": user_id,
             "promoted_user_id": promoted_user_id,
         },
     )

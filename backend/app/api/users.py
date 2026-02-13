@@ -95,7 +95,7 @@ async def get_user_club_role(
             detail="Not a member of this club"
         )
     
-    role = membership.role.value if membership.role else "member"
+    role = membership.role if membership.role else "member"
     
     return {
         "club_id": club_id,
