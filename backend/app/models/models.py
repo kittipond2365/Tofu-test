@@ -42,7 +42,59 @@ class MatchStatus(str, PyEnum):
     CANCELLED = "cancelled"
 
 
-# Models
+# Link models (must be defined before models that use them in link_model)
+class ClubModerator(SQLModel, table=True):
+    __tablename__ = "club_moderators"
+    __table_args__ = (
+        UniqueConstraint('club_id', 'user_id', name='uq_club_moderator'),
+    )
+
+    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
+    club_id: str = Field(foreign_key="clubs.id", max_length=36)
+    user_id: str = Field(foreign_key="users.id", max_length=36)
+    appointed_by: str = Field(foreign_key="users.id", max_length=36)
+    appointed_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ClubMember(SQLModel, table=True):
+    __tablename__ = "club_members"
+    __table_args__ = (
+        UniqueConstraint('club_id', 'user_id', name='uq_club_member'),
+    )
+
+    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
+    club_id: str = Field(foreign_key="clubs.id", max_length=36)
+    user_id: str = Field(foreign_key="users.id", max_length=36)
+    role: Optional[UserRole] = Field(default=UserRole.MEMBER, sa_column=Column(Enum(UserRole), default=UserRole.MEMBER))
+
+    # Club-specific stats
+    matches_in_club: int = Field(default=0)
+    wins_in_club: int = Field(default=0)
+    rating_in_club: float = Field(default=1000.0)
+
+    joined_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow))
+
+
+class SessionRegistration(SQLModel, table=True):
+    __tablename__ = "session_registrations"
+    __table_args__ = (
+        UniqueConstraint('session_id', 'user_id', name='uq_session_registration'),
+    )
+
+    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
+    session_id: str = Field(foreign_key="sessions.id", max_length=36)
+    user_id: str = Field(foreign_key="users.id", max_length=36)
+
+    status: Optional[RegistrationStatus] = Field(default=RegistrationStatus.CONFIRMED, sa_column=Column(Enum(RegistrationStatus), default=RegistrationStatus.CONFIRMED))
+    waitlist_position: Optional[int] = Field(default=None)
+
+    checked_in_at: Optional[datetime] = Field(default=None)
+    checked_out_at: Optional[datetime] = Field(default=None)
+
+    registered_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow))
+
+
+# Main models
 class User(SQLModel, table=True):
     __tablename__ = "users"
 
@@ -76,9 +128,12 @@ class User(SQLModel, table=True):
     registrations: List["SessionRegistration"] = Relationship(back_populates="user", cascade_delete=True)
     owned_clubs: List["Club"] = Relationship(
         back_populates="owner",
-        sa_relationship_kwargs={"foreign_keys": "[Club.owner_id]"}
+        sa_relationship_kwargs={"foreign_keys": "Club.owner_id"}
     )
-    moderated_clubs: List["ClubModerator"] = Relationship(back_populates="user")
+    moderated_clubs: List["Club"] = Relationship(
+        back_populates="moderators",
+        link_model=ClubModerator
+    )
 
 
 class Club(SQLModel, table=True):
@@ -111,53 +166,27 @@ class Club(SQLModel, table=True):
     updated_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow))
 
     # Relationships
-    owner: Optional[User] = Relationship(
+    owner: Optional["User"] = Relationship(
         back_populates="owned_clubs",
-        sa_relationship_kwargs={"foreign_keys": "[Club.owner_id]"}
+        sa_relationship_kwargs={"foreign_keys": "Club.owner_id"}
     )
     members: List["ClubMember"] = Relationship(back_populates="club", cascade_delete=True)
     sessions: List["Session"] = Relationship(back_populates="club", cascade_delete=True)
-    moderators: List["ClubModerator"] = Relationship(back_populates="club")
-
-
-class ClubMember(SQLModel, table=True):
-    __tablename__ = "club_members"
-    __table_args__ = (
-        UniqueConstraint('club_id', 'user_id', name='uq_club_member'),
+    moderators: List["User"] = Relationship(
+        back_populates="moderated_clubs",
+        link_model=ClubModerator
     )
 
-    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
-    club_id: str = Field(foreign_key="clubs.id", max_length=36)
-    user_id: str = Field(foreign_key="users.id", max_length=36)
-    role: Optional[UserRole] = Field(default=UserRole.MEMBER, sa_column=Column(Enum(UserRole), default=UserRole.MEMBER))
 
-    # Club-specific stats
-    matches_in_club: int = Field(default=0)
-    wins_in_club: int = Field(default=0)
-    rating_in_club: float = Field(default=1000.0)
+# Back-populated relationships for link models
+ClubMember.club: Optional[Club] = Relationship(back_populates="members")
+ClubMember.user: Optional[User] = Relationship(back_populates="club_memberships")
 
-    joined_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow))
+ClubModerator.club: Optional[Club] = Relationship(back_populates="moderators")
+ClubModerator.user: Optional[User] = Relationship(back_populates="moderated_clubs")
 
-    # Relationships
-    club: Optional[Club] = Relationship(back_populates="members")
-    user: Optional[User] = Relationship(back_populates="club_memberships")
-
-
-class ClubModerator(SQLModel, table=True):
-    __tablename__ = "club_moderators"
-    __table_args__ = (
-        UniqueConstraint('club_id', 'user_id', name='uq_club_moderator'),
-    )
-
-    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
-    club_id: str = Field(foreign_key="clubs.id", max_length=36)
-    user_id: str = Field(foreign_key="users.id", max_length=36)
-    appointed_by: str = Field(foreign_key="users.id", max_length=36)
-    appointed_at: datetime = Field(default_factory=datetime.utcnow)
-
-    # Relationships
-    club: Optional[Club] = Relationship(back_populates="moderators")
-    user: Optional[User] = Relationship(back_populates="moderated_clubs")
+SessionRegistration.session: Optional["Session"] = Relationship(back_populates="registrations")
+SessionRegistration.user: Optional[User] = Relationship(back_populates="registrations")
 
 
 class Session(SQLModel, table=True):
@@ -184,29 +213,6 @@ class Session(SQLModel, table=True):
     club: Optional[Club] = Relationship(back_populates="sessions")
     registrations: List["SessionRegistration"] = Relationship(back_populates="session", cascade_delete=True)
     matches: List["Match"] = Relationship(back_populates="session", cascade_delete=True)
-
-
-class SessionRegistration(SQLModel, table=True):
-    __tablename__ = "session_registrations"
-    __table_args__ = (
-        UniqueConstraint('session_id', 'user_id', name='uq_session_registration'),
-    )
-
-    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
-    session_id: str = Field(foreign_key="sessions.id", max_length=36)
-    user_id: str = Field(foreign_key="users.id", max_length=36)
-
-    status: Optional[RegistrationStatus] = Field(default=RegistrationStatus.CONFIRMED, sa_column=Column(Enum(RegistrationStatus), default=RegistrationStatus.CONFIRMED))
-    waitlist_position: Optional[int] = Field(default=None)
-
-    checked_in_at: Optional[datetime] = Field(default=None)
-    checked_out_at: Optional[datetime] = Field(default=None)
-
-    registered_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow))
-
-    # Relationships
-    session: Optional[Session] = Relationship(back_populates="registrations")
-    user: Optional[User] = Relationship(back_populates="registrations")
 
 
 class Match(SQLModel, table=True):
