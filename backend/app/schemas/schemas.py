@@ -83,7 +83,7 @@ class TokenResponse(BaseModel):
 # ============= Club Schemas =============
 class ClubBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
-    slug: str = Field(..., min_length=1, max_length=100, pattern=r'^[a-z0-9-]+$')
+    slug: str = Field(..., min_length=3, max_length=50, pattern=r'^[a-z0-9-]+$')
     description: Optional[str] = None
     location: Optional[str] = None
     max_members: int = Field(default=100, ge=1, le=1000)

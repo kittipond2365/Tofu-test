@@ -28,15 +28,20 @@ export default function CreateClubPage() {
   const queryClient = useQueryClient();
   const { success, error: showError } = useToast();
 
-  // Auto-generate slug from name
+  // Auto-generate slug from name (English only)
   const handleNameChange = (name: string) => {
     const slug = name
       .toLowerCase()
-      .replace(/[^a-z0-9ก-๙\s-]/g, '')
+      .replace(/[^a-z0-9\s-]/g, '')
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
       .substring(0, 50);
     setForm({ ...form, name, slug });
+  };
+
+  // Validate slug format
+  const isValidSlug = (slug: string): boolean => {
+    return /^[a-z0-9-]+$/.test(slug) && slug.length >= 3 && slug.length <= 50;
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -48,6 +53,13 @@ export default function CreateClubPage() {
     }
     if (!form.slug.trim()) {
       showError('กรุณากรอกข้อมูล', 'รหัสก๊วนห้ามว่าง');
+      return;
+    }
+    if (!isValidSlug(form.slug)) {
+      showError(
+        'รหัสก๊วนไม่ถูกต้อง',
+        'ใช้ได้เฉพาะตัวอักษร a-z, ตัวเลข 0-9 และขีด (-) ความยาว 3-50 ตัวอักษร'
+      );
       return;
     }
 
@@ -106,8 +118,9 @@ export default function CreateClubPage() {
                   setForm({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })
                 }
                 leftIcon={<Hash className="w-5 h-5" />}
-                helpText="ใช้ตัวอักษรภาษาอังกฤษพิมพ์เล็ก ตัวเลข และขีด (-) เท่านั้น"
+                helpText="ใช้ตัวอักษรภาษาอังกฤษพิมพ์เล็ก a-z, ตัวเลข 0-9 และขีด (-) เท่านั้น ความยาว 3-50 ตัวอักษร"
                 required
+                minLength={3}
                 maxLength={50}
               />
 

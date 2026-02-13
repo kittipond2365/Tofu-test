@@ -65,6 +65,10 @@ def decode_token(token: str, settings: Settings = None) -> Optional[dict]:
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         return payload
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.JWTClaimsError:
+        return None
     except JWTError:
         return None
 
@@ -84,7 +88,7 @@ async def get_current_user_id(
     if payload is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token",
+            detail="Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
@@ -92,7 +96,7 @@ async def get_current_user_id(
     if user_id is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token",
+            detail="Invalid token: missing user identifier",
             headers={"WWW-Authenticate": "Bearer"},
         )
     

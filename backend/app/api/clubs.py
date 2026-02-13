@@ -22,6 +22,20 @@ async def create_club(
     db: AsyncSession = Depends(get_db)
 ):
     """Create a new club"""
+    import re
+    
+    # Validate slug format (server-side)
+    if not re.match(r'^[a-z0-9-]+$', club_data.slug):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Slug must contain only lowercase letters, numbers, and hyphens"
+        )
+    if len(club_data.slug) < 3 or len(club_data.slug) > 50:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Slug must be between 3 and 50 characters"
+        )
+    
     # Check if slug already exists
     result = await db.execute(select(Club).where(Club.slug == club_data.slug))
     if result.scalar_one_or_none():
