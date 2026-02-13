@@ -1,6 +1,7 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 from typing import Optional, List
+from pydantic import Field
 
 
 class Settings(BaseSettings):
@@ -9,9 +10,33 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     API_V1_PREFIX: str = "/api/v1"
     
-    # Database
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/badminton_db"
-    DATABASE_URL_SYNC: str = "postgresql://postgres:postgres@localhost:5432/badminton_db"
+    # Database - Store raw URL from env
+    DATABASE_URL_RAW: str = Field(
+        default="postgresql+asyncpg://postgres:postgres@localhost:5432/badminton_db",
+        alias="DATABASE_URL"
+    )
+    
+    @property
+    def DATABASE_URL(self) -> str:
+        """URL for async operations (asyncpg)"""
+        url = self.DATABASE_URL_RAW
+        # Convert postgres:// or postgresql:// to postgresql+asyncpg://
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif url.startswith("postgresql://") and "+asyncpg" not in url:
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return url
+    
+    @property
+    def DATABASE_URL_SYNC(self) -> str:
+        """URL for sync operations (alembic, direct SQL)"""
+        url = self.DATABASE_URL_RAW
+        # Convert to postgresql:// (no +asyncpg)
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql://", 1)
+        elif url.startswith("postgresql+asyncpg://"):
+            url = url.replace("postgresql+asyncpg://", "postgresql://", 1)
+        return url
     
     # Redis
     REDIS_URL: str = "redis://localhost:6379/0"
