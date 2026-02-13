@@ -1,15 +1,13 @@
 """Add club owner, verification, moderators and super admin
 
 Revision ID: phase_1_schema_updates
-Revises: 
+Revises:
 Create Date: 2025-02-13 22:00:00.000000
 
 """
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
-import sqlmodel
 
 
 # revision identifiers, used by Alembic.
@@ -20,56 +18,80 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Add new columns to users table
-    op.add_column('users', sa.Column('is_super_admin', sa.Boolean(), nullable=True, server_default='false'))
-    
-    # Add new columns to clubs table
-    op.add_column('clubs', sa.Column('owner_id', sqlmodel.sql.sqltypes.AutoString(length=36), nullable=True))
-    op.add_column('clubs', sa.Column('is_verified', sa.Boolean(), nullable=True, server_default='false'))
-    op.add_column('clubs', sa.Column('verified_by', sqlmodel.sql.sqltypes.AutoString(length=36), nullable=True))
-    op.add_column('clubs', sa.Column('verified_at', sa.DateTime(), nullable=True))
-    op.add_column('clubs', sa.Column('previous_owner_id', sqlmodel.sql.sqltypes.AutoString(length=36), nullable=True))
-    op.add_column('clubs', sa.Column('transferred_at', sa.DateTime(), nullable=True))
-    
-    # Create foreign key constraints for clubs
-    op.create_foreign_key('fk_clubs_owner_id', 'clubs', 'users', ['owner_id'], ['id'])
-    op.create_foreign_key('fk_clubs_verified_by', 'clubs', 'users', ['verified_by'], ['id'])
-    op.create_foreign_key('fk_clubs_previous_owner_id', 'clubs', 'users', ['previous_owner_id'], ['id'])
-    
-    # Create club_moderators table
-    op.create_table(
-        'club_moderators',
-        sa.Column('id', sqlmodel.sql.sqltypes.AutoString(length=36), nullable=False),
-        sa.Column('club_id', sqlmodel.sql.sqltypes.AutoString(length=36), nullable=False),
-        sa.Column('user_id', sqlmodel.sql.sqltypes.AutoString(length=36), nullable=False),
-        sa.Column('appointed_by', sqlmodel.sql.sqltypes.AutoString(length=36), nullable=False),
-        sa.Column('appointed_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
-        sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('club_id', 'user_id', name='uq_club_moderator')
-    )
-    
-    # Create foreign keys for club_moderators
-    op.create_foreign_key('fk_club_moderators_club_id', 'club_moderators', 'clubs', ['club_id'], ['id'])
-    op.create_foreign_key('fk_club_moderators_user_id', 'club_moderators', 'users', ['user_id'], ['id'])
-    op.create_foreign_key('fk_club_moderators_appointed_by', 'club_moderators', 'users', ['appointed_by'], ['id'])
+    op.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='is_super_admin') THEN
+                ALTER TABLE users ADD COLUMN is_super_admin BOOLEAN DEFAULT FALSE;
+            END IF;
+
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='clubs' AND column_name='owner_id') THEN
+                ALTER TABLE clubs ADD COLUMN owner_id VARCHAR(36);
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='clubs' AND column_name='is_verified') THEN
+                ALTER TABLE clubs ADD COLUMN is_verified BOOLEAN DEFAULT FALSE;
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='clubs' AND column_name='verified_by') THEN
+                ALTER TABLE clubs ADD COLUMN verified_by VARCHAR(36);
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='clubs' AND column_name='verified_at') THEN
+                ALTER TABLE clubs ADD COLUMN verified_at TIMESTAMP;
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='clubs' AND column_name='previous_owner_id') THEN
+                ALTER TABLE clubs ADD COLUMN previous_owner_id VARCHAR(36);
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='clubs' AND column_name='transferred_at') THEN
+                ALTER TABLE clubs ADD COLUMN transferred_at TIMESTAMP;
+            END IF;
+
+            IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_name='clubs' AND constraint_name='fk_clubs_owner_id') THEN
+                ALTER TABLE clubs ADD CONSTRAINT fk_clubs_owner_id FOREIGN KEY (owner_id) REFERENCES users(id);
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_name='clubs' AND constraint_name='fk_clubs_verified_by') THEN
+                ALTER TABLE clubs ADD CONSTRAINT fk_clubs_verified_by FOREIGN KEY (verified_by) REFERENCES users(id);
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_name='clubs' AND constraint_name='fk_clubs_previous_owner_id') THEN
+                ALTER TABLE clubs ADD CONSTRAINT fk_clubs_previous_owner_id FOREIGN KEY (previous_owner_id) REFERENCES users(id);
+            END IF;
+        END $$;
+    """)
+
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS club_moderators (
+            id VARCHAR(36) PRIMARY KEY,
+            club_id VARCHAR(36) NOT NULL,
+            user_id VARCHAR(36) NOT NULL,
+            appointed_by VARCHAR(36) NOT NULL,
+            appointed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            CONSTRAINT uq_club_moderator UNIQUE (club_id, user_id)
+        )
+    """)
+
+    op.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_name='club_moderators' AND constraint_name='fk_club_moderators_club_id') THEN
+                ALTER TABLE club_moderators ADD CONSTRAINT fk_club_moderators_club_id FOREIGN KEY (club_id) REFERENCES clubs(id);
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_name='club_moderators' AND constraint_name='fk_club_moderators_user_id') THEN
+                ALTER TABLE club_moderators ADD CONSTRAINT fk_club_moderators_user_id FOREIGN KEY (user_id) REFERENCES users(id);
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_name='club_moderators' AND constraint_name='fk_club_moderators_appointed_by') THEN
+                ALTER TABLE club_moderators ADD CONSTRAINT fk_club_moderators_appointed_by FOREIGN KEY (appointed_by) REFERENCES users(id);
+            END IF;
+        END $$;
+    """)
 
 
 def downgrade() -> None:
-    # Drop club_moderators table
-    op.drop_table('club_moderators')
-    
-    # Drop foreign keys from clubs
-    op.drop_constraint('fk_clubs_owner_id', 'clubs', type_='foreignkey')
-    op.drop_constraint('fk_clubs_verified_by', 'clubs', type_='foreignkey')
-    op.drop_constraint('fk_clubs_previous_owner_id', 'clubs', type_='foreignkey')
-    
-    # Drop columns from clubs
-    op.drop_column('clubs', 'transferred_at')
-    op.drop_column('clubs', 'previous_owner_id')
-    op.drop_column('clubs', 'verified_at')
-    op.drop_column('clubs', 'verified_by')
-    op.drop_column('clubs', 'is_verified')
-    op.drop_column('clubs', 'owner_id')
-    
-    # Drop column from users
-    op.drop_column('users', 'is_super_admin')
+    op.execute("DROP TABLE IF EXISTS club_moderators CASCADE")
+    op.execute("ALTER TABLE clubs DROP CONSTRAINT IF EXISTS fk_clubs_owner_id")
+    op.execute("ALTER TABLE clubs DROP CONSTRAINT IF EXISTS fk_clubs_verified_by")
+    op.execute("ALTER TABLE clubs DROP CONSTRAINT IF EXISTS fk_clubs_previous_owner_id")
+    op.execute("ALTER TABLE clubs DROP COLUMN IF EXISTS transferred_at")
+    op.execute("ALTER TABLE clubs DROP COLUMN IF EXISTS previous_owner_id")
+    op.execute("ALTER TABLE clubs DROP COLUMN IF EXISTS verified_at")
+    op.execute("ALTER TABLE clubs DROP COLUMN IF EXISTS verified_by")
+    op.execute("ALTER TABLE clubs DROP COLUMN IF EXISTS is_verified")
+    op.execute("ALTER TABLE clubs DROP COLUMN IF EXISTS owner_id")
+    op.execute("ALTER TABLE users DROP COLUMN IF EXISTS is_super_admin")

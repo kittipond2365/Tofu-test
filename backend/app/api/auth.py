@@ -34,6 +34,10 @@ class UserLogin(BaseModel):
     password: str
 
 
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
 @router.post("/auth/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
     """Register a new user"""
@@ -209,8 +213,12 @@ async def line_callback(
 
 
 @router.post("/auth/refresh", response_model=TokenResponse)
-async def refresh_token(refresh_token: str, db: AsyncSession = Depends(get_db)):
+async def refresh_token(
+    payload: RefreshRequest,
+    db: AsyncSession = Depends(get_db)
+):
     """Refresh access token using refresh token"""
+    refresh_token = payload.refresh_token
     payload = decode_token(refresh_token)
     if not payload or payload.get("type") != "refresh":
         raise HTTPException(

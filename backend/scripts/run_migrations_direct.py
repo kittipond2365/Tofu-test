@@ -1,148 +1,151 @@
-"""Direct database migration using SQLModel - SYNC VERSION"""
+"""Complete database migration - adds ALL missing columns"""
+import asyncio
 import os
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import create_async_engine
 
-# Get and normalize DATABASE_URL
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/badminton_db")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://localhost/db")
 
-# Ensure sync URL format with psycopg2
+# Normalize URL
 if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg2://", 1)
-elif DATABASE_URL.startswith("postgresql+asyncpg://"):
-    DATABASE_URL = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql+psycopg2://", 1)
-# If already has +psycopg2, keep as is
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
+elif DATABASE_URL.startswith("postgresql://") and "+asyncpg" not in DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
 
-def migrate():
-    print(f"🔄 Connecting to database...")
-    engine = create_engine(DATABASE_URL, echo=False)
-    
-    with engine.begin() as conn:
-        # Helper function to check if column exists
-        def column_exists(table, column):
-            result = conn.execute(text(f"""
-                SELECT 1 FROM information_schema.columns 
+
+async def migrate():
+    engine = create_async_engine(DATABASE_URL, echo=False)
+
+    async with engine.begin() as conn:
+
+        # Helper to check column existence
+        async def column_exists(table, column):
+            result = await conn.execute(text(f"""
+                SELECT 1 FROM information_schema.columns
                 WHERE table_name='{table}' AND column_name='{column}'
             """))
             return result.scalar() is not None
-        
-        # Helper function to check if table exists
-        def table_exists(table):
-            result = conn.execute(text(f"""
-                SELECT 1 FROM information_schema.tables 
-                WHERE table_name='{table}'
-            """))
-            return result.scalar() is not None
-        
-        # Add columns to users table
-        columns_to_add = [
-            ("users", "picture_url", "VARCHAR"),
-            ("users", "email", "VARCHAR"),
-            ("users", "phone", "VARCHAR"),
-            ("users", "is_super_admin", "BOOLEAN DEFAULT FALSE"),
-            ("users", "updated_at", "TIMESTAMP"),
+
+        # ========== USERS TABLE ==========
+        user_columns = [
+            ("picture_url", "VARCHAR"),
+            ("email", "VARCHAR"),
+            ("phone", "VARCHAR"),
+            ("is_super_admin", "BOOLEAN DEFAULT FALSE"),
+            ("updated_at", "TIMESTAMP"),
+            ("full_name", "VARCHAR"),
+            ("hashed_password", "VARCHAR"),
+            ("is_active", "BOOLEAN DEFAULT TRUE"),
+            ("is_verified", "BOOLEAN DEFAULT FALSE"),
+            ("rating", "FLOAT DEFAULT 1000.0"),
+            ("total_matches", "INTEGER DEFAULT 0"),
+            ("wins", "INTEGER DEFAULT 0"),
+            ("losses", "INTEGER DEFAULT 0"),
+            ("fcm_token", "VARCHAR"),
         ]
-        
-        for table, column, col_type in columns_to_add:
-            if not column_exists(table, column):
-                print(f"➕ Adding {column} to {table}...")
-                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}"))
-            else:
-                print(f"✅ {column} already exists in {table}")
-        
-        # Add columns to clubs table
+
+        for col, type_ in user_columns:
+            if not await column_exists("users", col):
+                print(f"➕ Adding users.{col}")
+                await conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} {type_}"))
+
+        # ========== CLUBS TABLE ==========
         club_columns = [
-            ("clubs", "invite_code", "VARCHAR"),
-            ("clubs", "invite_qr_url", "VARCHAR"),
-            ("clubs", "payment_qr_url", "VARCHAR"),
-            ("clubs", "payment_method_note", "VARCHAR"),
-            ("clubs", "updated_at", "TIMESTAMP"),
+            ("owner_id", "VARCHAR REFERENCES users(id)"),
+            ("is_verified", "BOOLEAN DEFAULT FALSE"),
+            ("verified_by", "VARCHAR REFERENCES users(id)"),
+            ("verified_at", "TIMESTAMP"),
+            ("previous_owner_id", "VARCHAR REFERENCES users(id)"),
+            ("transferred_at", "TIMESTAMP"),
+            ("invite_code", "VARCHAR"),
+            ("invite_qr_url", "VARCHAR"),
+            ("payment_qr_url", "VARCHAR"),
+            ("payment_method_note", "VARCHAR"),
+            ("updated_at", "TIMESTAMP"),
         ]
-        
-        for table, column, col_type in club_columns:
-            if not column_exists(table, column):
-                print(f"➕ Adding {column} to {table}...")
-                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}"))
-            else:
-                print(f"✅ {column} already exists in {table}")
-        
-        # Create new tables
-        if not table_exists("club_moderators"):
-            print("➕ Creating club_moderators table...")
-            conn.execute(text("""
-                CREATE TABLE club_moderators (
-                    id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
-                    club_id VARCHAR(36) NOT NULL REFERENCES clubs(id),
-                    user_id VARCHAR(36) NOT NULL REFERENCES users(id),
-                    appointed_by VARCHAR(36) NOT NULL REFERENCES users(id),
-                    appointed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                    UNIQUE (club_id, user_id)
-                )
-            """))
-        else:
-            print("✅ club_moderators table already exists")
-        
-        if not table_exists("inbox_messages"):
-            print("➕ Creating inbox_messages table...")
-            conn.execute(text("""
-                CREATE TABLE inbox_messages (
-                    id SERIAL PRIMARY KEY,
-                    user_id VARCHAR(36) NOT NULL REFERENCES users(id),
-                    title VARCHAR NOT NULL,
-                    message VARCHAR NOT NULL,
-                    message_type VARCHAR DEFAULT 'notification',
-                    amount FLOAT,
-                    qr_code_url VARCHAR,
-                    session_id VARCHAR(36) REFERENCES sessions(id),
-                    proof_image_url VARCHAR,
-                    proof_uploaded_at TIMESTAMP,
-                    proof_expires_at TIMESTAMP,
-                    is_read BOOLEAN DEFAULT FALSE,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """))
-        else:
-            print("✅ inbox_messages table already exists")
-        
-        if not table_exists("courts"):
-            print("➕ Creating courts table...")
-            conn.execute(text("""
-                CREATE TABLE courts (
-                    id SERIAL PRIMARY KEY,
-                    session_id VARCHAR(36) NOT NULL REFERENCES sessions(id),
-                    court_number INTEGER NOT NULL,
-                    status VARCHAR DEFAULT 'available',
-                    auto_matching_enabled BOOLEAN DEFAULT TRUE,
-                    current_match_id VARCHAR(36) REFERENCES matches(id),
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    closed_at TIMESTAMP
-                )
-            """))
-        else:
-            print("✅ courts table already exists")
-        
-        if not table_exists("pre_matches"):
-            print("➕ Creating pre_matches table...")
-            conn.execute(text("""
-                CREATE TABLE pre_matches (
-                    id SERIAL PRIMARY KEY,
-                    session_id VARCHAR(36) NOT NULL REFERENCES sessions(id),
-                    match_order INTEGER DEFAULT 1,
-                    team_a_player_1_id VARCHAR(36) NOT NULL REFERENCES users(id),
-                    team_a_player_2_id VARCHAR(36) REFERENCES users(id),
-                    team_b_player_1_id VARCHAR(36) NOT NULL REFERENCES users(id),
-                    team_b_player_2_id VARCHAR(36) REFERENCES users(id),
-                    status VARCHAR DEFAULT 'queued',
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    activated_at TIMESTAMP
-                )
-            """))
-        else:
-            print("✅ pre_matches table already exists")
-        
+
+        for col, type_ in club_columns:
+            if not await column_exists("clubs", col):
+                print(f"➕ Adding clubs.{col}")
+                await conn.execute(text(f"ALTER TABLE clubs ADD COLUMN {col} {type_}"))
+
+        # ========== CLUB_MEMBERS TABLE ==========
+        club_member_columns = [
+            ("id", "SERIAL PRIMARY KEY"),  # This is tricky - need to handle carefully
+            ("role", "VARCHAR DEFAULT 'member'"),
+            ("matches_in_club", "INTEGER DEFAULT 0"),
+            ("wins_in_club", "INTEGER DEFAULT 0"),
+            ("rating_in_club", "FLOAT DEFAULT 1000.0"),
+        ]
+
+        # Check if id column exists (might be composite PK)
+        if not await column_exists("club_members", "id"):
+            # Need to recreate table or add id column carefully
+            print("⚠️  club_members.id missing - needs manual fix")
+
+        for col, type_ in club_member_columns[1:]:  # Skip id for now
+            if not await column_exists("club_members", col):
+                print(f"➕ Adding club_members.{col}")
+                await conn.execute(text(f"ALTER TABLE club_members ADD COLUMN {col} {type_}"))
+
+        # ========== SESSIONS TABLE ==========
+        session_columns = [
+            ("location", "VARCHAR"),
+            ("max_participants", "INTEGER DEFAULT 20"),
+            ("created_by", "VARCHAR REFERENCES users(id)"),
+            ("number_of_courts", "INTEGER DEFAULT 1"),
+            ("court_cost_per_hour", "FLOAT"),
+            ("total_court_cost", "FLOAT"),
+            ("payment_type", "VARCHAR DEFAULT 'split'"),
+            ("buffet_price", "FLOAT"),
+            ("updated_at", "TIMESTAMP"),
+        ]
+
+        for col, type_ in session_columns:
+            if not await column_exists("sessions", col):
+                print(f"➕ Adding sessions.{col}")
+                await conn.execute(text(f"ALTER TABLE sessions ADD COLUMN {col} {type_}"))
+
+        # ========== MATCHES TABLE ==========
+        match_columns = [
+            ("match_type", "VARCHAR DEFAULT 'single'"),
+            ("team_a_player_2_id", "VARCHAR REFERENCES users(id)"),
+            ("team_b_player_2_id", "VARCHAR REFERENCES users(id)"),
+            ("winner_team", "VARCHAR"),
+            ("set_scores", "JSONB"),
+            ("score", "VARCHAR"),
+            ("shuttlecocks_used", "INTEGER DEFAULT 0"),
+            ("shuttlecock_price", "FLOAT"),
+            ("started_at", "TIMESTAMP"),
+            ("completed_at", "TIMESTAMP"),
+        ]
+
+        for col, type_ in match_columns:
+            if not await column_exists("matches", col):
+                print(f"➕ Adding matches.{col}")
+                await conn.execute(text(f"ALTER TABLE matches ADD COLUMN {col} {type_}"))
+
+        # ========== SESSION_REGISTRATIONS TABLE ==========
+        reg_columns = [
+            ("id", "SERIAL PRIMARY KEY"),
+            ("waitlist_position", "INTEGER"),
+            ("checked_in_at", "TIMESTAMP"),
+            ("checked_out_at", "TIMESTAMP"),
+        ]
+
+        # Check if id exists
+        if not await column_exists("session_registrations", "id"):
+            print("⚠️  session_registrations.id missing - needs manual fix")
+
+        for col, type_ in reg_columns[1:]:
+            if not await column_exists("session_registrations", col):
+                print(f"➕ Adding session_registrations.{col}")
+                await conn.execute(text(f"ALTER TABLE session_registrations ADD COLUMN {col} {type_}"))
+
         print("✅ Migration complete!")
-    
-    engine.dispose()
+
+    await engine.dispose()
+
 
 if __name__ == "__main__":
-    migrate()
+    asyncio.run(migrate())

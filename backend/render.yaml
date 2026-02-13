@@ -14,3 +14,5 @@ services:
           type: redis
           name: badminton-redis
           property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
