@@ -1,242 +1,214 @@
-import uuid
 from datetime import datetime
-from typing import List, Optional
-from enum import Enum as PyEnum
-
+from typing import Optional, List
 from sqlmodel import SQLModel, Field, Relationship
-from sqlalchemy import Column, String, DateTime, Integer, Float, Boolean, Text, Enum, ForeignKey, UniqueConstraint
+from sqlalchemy import UniqueConstraint, Index, Column, JSON
 
-
-def generate_uuid() -> str:
-    return str(uuid.uuid4())
-
-
-# Enums
-class UserRole(str, PyEnum):
-    ADMIN = "admin"
-    ORGANIZER = "organizer"
-    MEMBER = "member"
-
-
-class SessionStatus(str, PyEnum):
-    DRAFT = "draft"
-    OPEN = "open"
-    FULL = "full"
-    ONGOING = "ongoing"
-    COMPLETED = "completed"
-    CANCELLED = "cancelled"
-
-
-class RegistrationStatus(str, PyEnum):
-    CONFIRMED = "confirmed"
-    WAITLISTED = "waitlisted"
-    CANCELLED = "cancelled"
-    ATTENDED = "attended"
-    NO_SHOW = "no_show"
-
-
-class MatchStatus(str, PyEnum):
-    SCHEDULED = "scheduled"
-    ONGOING = "ongoing"
-    COMPLETED = "completed"
-    CANCELLED = "cancelled"
-
-
-# Link models (must be defined before models that use them in link_model)
-class ClubModerator(SQLModel, table=True):
-    __tablename__ = "club_moderators"
-    __table_args__ = (
-        UniqueConstraint('club_id', 'user_id', name='uq_club_moderator'),
-    )
-
-    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
-    club_id: str = Field(foreign_key="clubs.id", max_length=36)
-    user_id: str = Field(foreign_key="users.id", max_length=36)
-    appointed_by: str = Field(foreign_key="users.id", max_length=36)
-    appointed_at: datetime = Field(default_factory=datetime.utcnow)
-
-    # NO relationships - pure link table, use link_model in User/Club
-
+# ============= LINK TABLES (No relationships, just FKs) =============
 
 class ClubMember(SQLModel, table=True):
     __tablename__ = "club_members"
-    __table_args__ = (
-        UniqueConstraint('club_id', 'user_id', name='uq_club_member'),
-    )
+    
+    club_id: int = Field(foreign_key="clubs.id", primary_key=True)
+    user_id: int = Field(foreign_key="users.id", primary_key=True)
+    joined_at: datetime = Field(default_factory=datetime.utcnow)
 
-    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
-    club_id: str = Field(foreign_key="clubs.id", max_length=36)
-    user_id: str = Field(foreign_key="users.id", max_length=36)
-    role: Optional[UserRole] = Field(default=UserRole.MEMBER, sa_column=Column(Enum(UserRole), default=UserRole.MEMBER))
-
-    # Club-specific stats
-    matches_in_club: int = Field(default=0)
-    wins_in_club: int = Field(default=0)
-    rating_in_club: float = Field(default=1000.0)
-
-    joined_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow))
-
-    # Relationships
-    club: Optional["Club"] = Relationship(back_populates="members")
-    user: Optional["User"] = Relationship(back_populates="club_memberships")
-
+class ClubModerator(SQLModel, table=True):
+    __tablename__ = "club_moderators"
+    
+    id: Optional[int] = Field(default=None, primary_key=True)
+    club_id: int = Field(foreign_key="clubs.id")
+    user_id: int = Field(foreign_key="users.id")
+    appointed_by: int = Field(foreign_key="users.id")
+    appointed_at: datetime = Field(default_factory=datetime.utcnow)
 
 class SessionRegistration(SQLModel, table=True):
     __tablename__ = "session_registrations"
-    __table_args__ = (
-        UniqueConstraint('session_id', 'user_id', name='uq_session_registration'),
-    )
+    
+    session_id: int = Field(foreign_key="sessions.id", primary_key=True)
+    user_id: int = Field(foreign_key="users.id", primary_key=True)
+    registered_at: datetime = Field(default_factory=datetime.utcnow)
+    status: str = Field(default="confirmed")  # confirmed, cancelled, attended
 
-    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
-    session_id: str = Field(foreign_key="sessions.id", max_length=36)
-    user_id: str = Field(foreign_key="users.id", max_length=36)
+# ============= MAIN MODELS =============
 
-    status: Optional[RegistrationStatus] = Field(default=RegistrationStatus.CONFIRMED, sa_column=Column(Enum(RegistrationStatus), default=RegistrationStatus.CONFIRMED))
-    waitlist_position: Optional[int] = Field(default=None)
-
-    checked_in_at: Optional[datetime] = Field(default=None)
-    checked_out_at: Optional[datetime] = Field(default=None)
-
-    registered_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow))
-
-    # Relationships
-    session: Optional["Session"] = Relationship(back_populates="registrations")
-    user: Optional["User"] = Relationship(back_populates="registrations")
-
-
-# Main models
 class User(SQLModel, table=True):
     __tablename__ = "users"
-
-    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
-    email: Optional[str] = Field(default=None, max_length=255, unique=True, index=True)
-    hashed_password: Optional[str] = Field(default=None, max_length=255)
-    full_name: str = Field(max_length=255)
-    display_name: Optional[str] = Field(default=None, max_length=100)
-    phone: Optional[str] = Field(default=None, max_length=20)
-    fcm_token: Optional[str] = Field(default=None, max_length=255)
-    line_user_id: Optional[str] = Field(default=None, max_length=100, unique=True)
-    avatar_url: Optional[str] = Field(default=None, max_length=500)
-
-    # Player stats summary
-    total_matches: int = Field(default=0)
-    wins: int = Field(default=0)
-    losses: int = Field(default=0)
-    rating: float = Field(default=1000.0)
-
-    is_active: bool = Field(default=True)
-    is_verified: bool = Field(default=False)
     
-    # NEW FIELDS for Phase 1
+    id: Optional[int] = Field(default=None, primary_key=True)
+    line_user_id: str = Field(unique=True, index=True)
+    display_name: str
+    picture_url: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
     is_super_admin: bool = Field(default=False)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
     
-    created_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow))
-    updated_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow))
-
-    # Relationships
-    club_memberships: List["ClubMember"] = Relationship(back_populates="user", cascade_delete=True)
-    registrations: List["SessionRegistration"] = Relationship(back_populates="user", cascade_delete=True)
+    # Clubs owned (via owner_id FK in Club)
     owned_clubs: List["Club"] = Relationship(
         back_populates="owner",
         sa_relationship_kwargs={"foreign_keys": "Club.owner_id"}
     )
-    moderated_clubs: List["Club"] = Relationship(
-        link_model=ClubModerator
-    )
-
 
 class Club(SQLModel, table=True):
     __tablename__ = "clubs"
-
-    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
-    name: str = Field(max_length=255)
-    slug: str = Field(max_length=100, unique=True, index=True)
-    description: Optional[str] = Field(default=None, sa_column=Column(Text, nullable=True))
-    location: Optional[str] = Field(default=None, max_length=500)
-
-    # Settings
+    
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(index=True)
+    slug: str = Field(unique=True, index=True)
+    description: Optional[str] = None
+    location: Optional[str] = None
     max_members: int = Field(default=100)
-    is_public: bool = Field(default=False)
-
-    # LINE Notify
-    line_notify_token: Optional[str] = Field(default=None, max_length=255)
+    is_public: bool = Field(default=True)
+    invite_code: Optional[str] = None
+    invite_qr_url: Optional[str] = None
     
-    # NEW FIELDS for Phase 1
-    owner_id: Optional[str] = Field(default=None, foreign_key="users.id", max_length=36)
+    # Owner
+    owner_id: int = Field(foreign_key="users.id")
+    
+    # Verification
     is_verified: bool = Field(default=False)
-    verified_by: Optional[str] = Field(default=None, foreign_key="users.id", max_length=36)
-    verified_at: Optional[datetime] = Field(default=None)
+    verified_by: Optional[int] = Field(foreign_key="users.id", default=None)
+    verified_at: Optional[datetime] = None
     
-    # For ownership transfer
-    previous_owner_id: Optional[str] = Field(default=None, foreign_key="users.id", max_length=36)
-    transferred_at: Optional[datetime] = Field(default=None)
-
-    created_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow))
-    updated_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow))
-
+    # Ownership transfer
+    previous_owner_id: Optional[int] = Field(foreign_key="users.id", default=None)
+    transferred_at: Optional[datetime] = None
+    
+    # QR Payment
+    payment_qr_url: Optional[str] = None
+    payment_method_note: Optional[str] = None
+    
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    
     # Relationships
     owner: Optional["User"] = Relationship(
         back_populates="owned_clubs",
         sa_relationship_kwargs={"foreign_keys": "Club.owner_id"}
     )
-    members: List["ClubMember"] = Relationship(back_populates="club", cascade_delete=True)
-    sessions: List["Session"] = Relationship(back_populates="club", cascade_delete=True)
-    moderators: List["User"] = Relationship(
-        link_model=ClubModerator
-    )
-
+    sessions: List["Session"] = Relationship(back_populates="club")
 
 class Session(SQLModel, table=True):
     __tablename__ = "sessions"
-
-    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
-    club_id: str = Field(foreign_key="clubs.id", max_length=36)
-
-    title: str = Field(max_length=255)
-    description: Optional[str] = Field(default=None, sa_column=Column(Text, nullable=True))
-    location: str = Field(max_length=500)
-
+    
+    id: Optional[int] = Field(default=None, primary_key=True)
+    club_id: int = Field(foreign_key="clubs.id")
+    title: str
+    description: Optional[str] = None
+    
+    # Session time
     start_time: datetime
-    end_time: datetime
-
-    max_participants: int = Field(default=20)
-    status: Optional[SessionStatus] = Field(default=SessionStatus.DRAFT, sa_column=Column(Enum(SessionStatus), default=SessionStatus.DRAFT))
-
-    created_by: str = Field(foreign_key="users.id", max_length=36)
-    created_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow))
-    updated_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow))
-
+    end_time: Optional[datetime] = None
+    
+    # Court info
+    number_of_courts: int = Field(default=1)
+    court_cost_per_hour: Optional[float] = None
+    total_court_cost: Optional[float] = None
+    
+    # Payment settings
+    payment_type: str = Field(default="split")  # split, per_shuttle, buffet
+    buffet_price: Optional[float] = None  # For buffet type
+    
+    # Status
+    status: str = Field(default="upcoming")  # upcoming, active, completed, cancelled
+    
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    
     # Relationships
-    club: Optional[Club] = Relationship(back_populates="sessions")
-    registrations: List["SessionRegistration"] = Relationship(back_populates="session", cascade_delete=True)
-    matches: List["Match"] = Relationship(back_populates="session", cascade_delete=True)
-
+    club: Optional["Club"] = Relationship(back_populates="sessions")
+    matches: List["Match"] = Relationship(back_populates="session")
 
 class Match(SQLModel, table=True):
     __tablename__ = "matches"
-
-    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
-    session_id: str = Field(foreign_key="sessions.id", max_length=36)
-
+    
+    id: Optional[int] = Field(default=None, primary_key=True)
+    session_id: int = Field(foreign_key="sessions.id")
     court_number: int = Field(default=1)
-
+    
+    # Match type
+    match_type: str = Field(default="single")  # single, bo2, bo3
+    
     # Team A
-    team_a_player_1_id: str = Field(foreign_key="users.id", max_length=36)
-    team_a_player_2_id: Optional[str] = Field(default=None, foreign_key="users.id", max_length=36)
-
+    team_a_player_1_id: int = Field(foreign_key="users.id")
+    team_a_player_2_id: Optional[int] = Field(foreign_key="users.id", default=None)
+    team_a_score: Optional[int] = None
+    
     # Team B
-    team_b_player_1_id: str = Field(foreign_key="users.id", max_length=36)
-    team_b_player_2_id: Optional[str] = Field(default=None, foreign_key="users.id", max_length=36)
-
-    # Scores
-    score: Optional[str] = Field(default=None, max_length=50)
-    winner_team: Optional[str] = Field(default=None, max_length=1)
-
-    status: Optional[MatchStatus] = Field(default=MatchStatus.SCHEDULED, sa_column=Column(Enum(MatchStatus), default=MatchStatus.SCHEDULED))
-
-    started_at: Optional[datetime] = Field(default=None)
-    completed_at: Optional[datetime] = Field(default=None)
-    created_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow))
-
+    team_b_player_1_id: int = Field(foreign_key="users.id")
+    team_b_player_2_id: Optional[int] = Field(foreign_key="users.id", default=None)
+    team_b_score: Optional[int] = None
+    
+    # Results
+    winner_team: Optional[str] = None  # "A", "B", or "draw"
+    
+    # For BO2/BO3
+    set_scores: Optional[dict] = Field(default=None, sa_column=Column(JSON, nullable=True))  # JSON: {"set1": {"A": 21, "B": 18}, ...}
+    
+    # Status
+    status: str = Field(default="scheduled")  # scheduled, in_progress, completed, cancelled
+    
+    # Shuttlecock usage
+    shuttlecocks_used: int = Field(default=0)
+    shuttlecock_price: Optional[float] = None
+    
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    
     # Relationships
-    session: Optional[Session] = Relationship(back_populates="matches")
+    session: Optional["Session"] = Relationship(back_populates="matches")
+
+# ============= ADDITIONAL TABLES =============
+
+class InboxMessage(SQLModel, table=True):
+    __tablename__ = "inbox_messages"
+    
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id")
+    title: str
+    message: str
+    message_type: str = Field(default="notification")  # payment, notification, invite, result
+    
+    # For payment messages
+    amount: Optional[float] = None
+    qr_code_url: Optional[str] = None
+    session_id: Optional[int] = Field(foreign_key="sessions.id", default=None)
+    
+    # For payment proof
+    proof_image_url: Optional[str] = None
+    proof_uploaded_at: Optional[datetime] = None
+    proof_expires_at: Optional[datetime] = None
+    
+    is_read: bool = Field(default=False)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class Court(SQLModel, table=True):
+    __tablename__ = "courts"
+    
+    id: Optional[int] = Field(default=None, primary_key=True)
+    session_id: int = Field(foreign_key="sessions.id")
+    court_number: int
+    status: str = Field(default="available")  # available, occupied, maintenance, closed
+    auto_matching_enabled: bool = Field(default=True)
+    current_match_id: Optional[int] = Field(foreign_key="matches.id", default=None)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    closed_at: Optional[datetime] = None
+
+class PreMatch(SQLModel, table=True):
+    __tablename__ = "pre_matches"
+    
+    id: Optional[int] = Field(default=None, primary_key=True)
+    session_id: int = Field(foreign_key="sessions.id")
+    match_order: int = Field(default=1)
+    
+    # Players
+    team_a_player_1_id: int = Field(foreign_key="users.id")
+    team_a_player_2_id: Optional[int] = Field(foreign_key="users.id", default=None)
+    team_b_player_1_id: int = Field(foreign_key="users.id")
+    team_b_player_2_id: Optional[int] = Field(foreign_key="users.id", default=None)
+    
+    status: str = Field(default="queued")  # queued, on_deck, active, cancelled
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    activated_at: Optional[datetime] = None
