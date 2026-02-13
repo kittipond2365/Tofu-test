@@ -55,12 +55,7 @@ class ClubModerator(SQLModel, table=True):
     appointed_by: str = Field(foreign_key="users.id", max_length=36)
     appointed_at: datetime = Field(default_factory=datetime.utcnow)
 
-    # Simple relationships WITHOUT back_populates (link_model handles the association)
-    club: Optional["Club"] = Relationship()
-    user: Optional["User"] = Relationship()
-    appointed_by_user: Optional["User"] = Relationship(
-        sa_relationship_kwargs={"foreign_keys": "[ClubModerator.appointed_by]"}
-    )
+    # NO relationships - pure link table, use link_model in User/Club
 
 
 class ClubMember(SQLModel, table=True):
