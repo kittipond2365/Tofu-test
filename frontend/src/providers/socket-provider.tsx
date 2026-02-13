@@ -6,11 +6,24 @@ import { connectSocket, disconnectSocket } from '@/lib/socket';
 export default function SocketProvider() {
   const qc = useQueryClient();
   useEffect(() => {
-    const s = connectSocket();
-    s.on('registration_update', (payload) => { if (payload?.session_id) qc.invalidateQueries({ queryKey: ['session', payload.session_id] }); });
-    s.on('match_started', () => { alert('A match has started'); qc.invalidateQueries({ queryKey: ['matches'] }); });
-    s.on('score_update', (payload) => { if (payload?.match_id) qc.invalidateQueries({ queryKey: ['match', payload.match_id] }); });
-    return () => disconnectSocket();
+    try {
+      const s = connectSocket();
+      s.on('registration_update', (payload) => {
+        if (payload?.session_id) qc.invalidateQueries({ queryKey: ['session', payload.session_id] });
+      });
+      s.on('match_started', () => {
+        qc.invalidateQueries({ queryKey: ['matches'] });
+      });
+      s.on('score_update', (payload) => {
+        if (payload?.match_id) qc.invalidateQueries({ queryKey: ['match', payload.match_id] });
+      });
+      s.on('connect_error', (err) => {
+        console.warn('Socket connection error:', err.message);
+      });
+      return () => disconnectSocket();
+    } catch (err) {
+      console.warn('Failed to initialize socket:', err);
+    }
   }, [qc]);
   return null;
 }

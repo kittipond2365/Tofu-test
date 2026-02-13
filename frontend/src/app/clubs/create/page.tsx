@@ -54,13 +54,20 @@ export default function CreateClubPage() {
     setIsSubmitting(true);
     try {
       const c = await apiClient.createClub(form);
+      if (!c || !c.id) {
+        throw new Error('ได้รับข้อมูลไม่ครบจากเซิร์ฟเวอร์');
+      }
       // Invalidate clubs cache so list refreshes
       await queryClient.invalidateQueries({ queryKey: ['clubs'] });
-      success('สร้างก๊วนสำเร็จ! 🎉', `ก๊วน "${c.name}" พร้อมใช้งานแล้ว`);
+      success('สร้างก๊วนสำเร็จ! 🎉', `ก๊วน "${c.name || form.name}" พร้อมใช้งานแล้ว`);
       router.push(`/clubs/${c.id}`);
     } catch (err: any) {
-      const detail = err?.response?.data?.detail || 'ไม่สามารถสร้างก๊วนได้ กรุณาลองใหม่';
-      showError('สร้างก๊วนไม่สำเร็จ', detail);
+      console.error('Club creation error:', err);
+      const detail =
+        err?.response?.data?.detail ||
+        err?.message ||
+        'ไม่สามารถสร้างก๊วนได้ กรุณาลองใหม่';
+      showError('สร้างก๊วนไม่สำเร็จ', typeof detail === 'string' ? detail : JSON.stringify(detail));
       setIsSubmitting(false);
     }
   };
