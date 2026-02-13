@@ -74,7 +74,10 @@ class User(SQLModel, table=True):
     # Relationships
     club_memberships: List["ClubMember"] = Relationship(back_populates="user", cascade_delete=True)
     registrations: List["SessionRegistration"] = Relationship(back_populates="user", cascade_delete=True)
-    owned_clubs: List["Club"] = Relationship(back_populates="owner")
+    owned_clubs: List["Club"] = Relationship(
+        back_populates="owner",
+        sa_relationship_kwargs={"foreign_keys": "[Club.owner_id]"}
+    )
     moderated_clubs: List["ClubModerator"] = Relationship(back_populates="user")
 
 
@@ -108,7 +111,10 @@ class Club(SQLModel, table=True):
     updated_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow))
 
     # Relationships
-    owner: Optional[User] = Relationship(back_populates="owned_clubs")
+    owner: Optional[User] = Relationship(
+        back_populates="owned_clubs",
+        sa_relationship_kwargs={"foreign_keys": "[Club.owner_id]"}
+    )
     members: List["ClubMember"] = Relationship(back_populates="club", cascade_delete=True)
     sessions: List["Session"] = Relationship(back_populates="club", cascade_delete=True)
     moderators: List["ClubModerator"] = Relationship(back_populates="club")
