@@ -52,7 +52,7 @@ class MessageType(str, Enum):
 class ClubMember(SQLModel, table=True):
     __tablename__ = "club_members"
     
-    club_id: int = Field(foreign_key="clubs.id", primary_key=True)
+    club_id: str = Field(foreign_key="clubs.id", primary_key=True)
     user_id: str = Field(foreign_key="users.id", primary_key=True)
     role: str = Field(default="member")  # owner, moderator, member
     joined_at: datetime = Field(default_factory=datetime.utcnow)
@@ -61,7 +61,7 @@ class ClubModerator(SQLModel, table=True):
     __tablename__ = "club_moderators"
     
     id: Optional[int] = Field(default=None, primary_key=True)
-    club_id: int = Field(foreign_key="clubs.id")
+    club_id: str = Field(foreign_key="clubs.id")
     user_id: str = Field(foreign_key="users.id")
     appointed_by: str = Field(foreign_key="users.id")
     appointed_at: datetime = Field(default_factory=datetime.utcnow)
@@ -69,7 +69,7 @@ class ClubModerator(SQLModel, table=True):
 class SessionRegistration(SQLModel, table=True):
     __tablename__ = "session_registrations"
     
-    session_id: int = Field(foreign_key="sessions.id", primary_key=True)
+    session_id: str = Field(foreign_key="sessions.id", primary_key=True)
     user_id: str = Field(foreign_key="users.id", primary_key=True)
     registered_at: datetime = Field(default_factory=datetime.utcnow)
     status: str = Field(default="confirmed")  # confirmed, cancelled, attended
@@ -98,7 +98,7 @@ class User(SQLModel, table=True):
 class Club(SQLModel, table=True):
     __tablename__ = "clubs"
     
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: str = Field(primary_key=True)
     name: str = Field(index=True)
     slug: str = Field(unique=True, index=True)
     description: Optional[str] = None
@@ -137,8 +137,8 @@ class Club(SQLModel, table=True):
 class Session(SQLModel, table=True):
     __tablename__ = "sessions"
     
-    id: Optional[int] = Field(default=None, primary_key=True)
-    club_id: int = Field(foreign_key="clubs.id")
+    id: str = Field(primary_key=True)
+    club_id: str = Field(foreign_key="clubs.id")
     title: str
     description: Optional[str] = None
     
@@ -168,8 +168,8 @@ class Session(SQLModel, table=True):
 class Match(SQLModel, table=True):
     __tablename__ = "matches"
     
-    id: Optional[int] = Field(default=None, primary_key=True)
-    session_id: int = Field(foreign_key="sessions.id")
+    id: str = Field(primary_key=True)
+    session_id: str = Field(foreign_key="sessions.id")
     court_number: int = Field(default=1)
     
     # Match type
@@ -219,7 +219,7 @@ class InboxMessage(SQLModel, table=True):
     # For payment messages
     amount: Optional[float] = None
     qr_code_url: Optional[str] = None
-    session_id: Optional[int] = Field(foreign_key="sessions.id", default=None)
+    session_id: Optional[str] = Field(foreign_key="sessions.id", default=None)
     
     # For payment proof
     proof_image_url: Optional[str] = None
@@ -233,11 +233,11 @@ class Court(SQLModel, table=True):
     __tablename__ = "courts"
     
     id: Optional[int] = Field(default=None, primary_key=True)
-    session_id: int = Field(foreign_key="sessions.id")
+    session_id: str = Field(foreign_key="sessions.id")
     court_number: int
     status: str = Field(default="available")  # available, occupied, maintenance, closed
     auto_matching_enabled: bool = Field(default=True)
-    current_match_id: Optional[int] = Field(foreign_key="matches.id", default=None)
+    current_match_id: Optional[str] = Field(foreign_key="matches.id", default=None)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     closed_at: Optional[datetime] = None
 
@@ -245,7 +245,7 @@ class PreMatch(SQLModel, table=True):
     __tablename__ = "pre_matches"
     
     id: Optional[int] = Field(default=None, primary_key=True)
-    session_id: int = Field(foreign_key="sessions.id")
+    session_id: str = Field(foreign_key="sessions.id")
     match_order: int = Field(default=1)
     
     # Players
