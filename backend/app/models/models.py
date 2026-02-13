@@ -53,7 +53,7 @@ class ClubMember(SQLModel, table=True):
     __tablename__ = "club_members"
     
     club_id: int = Field(foreign_key="clubs.id", primary_key=True)
-    user_id: int = Field(foreign_key="users.id", primary_key=True)
+    user_id: str = Field(foreign_key="users.id", primary_key=True)
     role: str = Field(default="member")  # owner, moderator, member
     joined_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -62,15 +62,15 @@ class ClubModerator(SQLModel, table=True):
     
     id: Optional[int] = Field(default=None, primary_key=True)
     club_id: int = Field(foreign_key="clubs.id")
-    user_id: int = Field(foreign_key="users.id")
-    appointed_by: int = Field(foreign_key="users.id")
+    user_id: str = Field(foreign_key="users.id")
+    appointed_by: str = Field(foreign_key="users.id")
     appointed_at: datetime = Field(default_factory=datetime.utcnow)
 
 class SessionRegistration(SQLModel, table=True):
     __tablename__ = "session_registrations"
     
     session_id: int = Field(foreign_key="sessions.id", primary_key=True)
-    user_id: int = Field(foreign_key="users.id", primary_key=True)
+    user_id: str = Field(foreign_key="users.id", primary_key=True)
     registered_at: datetime = Field(default_factory=datetime.utcnow)
     status: str = Field(default="confirmed")  # confirmed, cancelled, attended
 
@@ -79,7 +79,7 @@ class SessionRegistration(SQLModel, table=True):
 class User(SQLModel, table=True):
     __tablename__ = "users"
     
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: str = Field(primary_key=True)
     line_user_id: str = Field(unique=True, index=True)
     display_name: str
     picture_url: Optional[str] = None
@@ -109,15 +109,15 @@ class Club(SQLModel, table=True):
     invite_qr_url: Optional[str] = None
     
     # Owner
-    owner_id: int = Field(foreign_key="users.id")
+    owner_id: str = Field(foreign_key="users.id")
     
     # Verification
     is_verified: bool = Field(default=False)
-    verified_by: Optional[int] = Field(foreign_key="users.id", default=None)
+    verified_by: Optional[str] = Field(foreign_key="users.id", default=None)
     verified_at: Optional[datetime] = None
     
     # Ownership transfer
-    previous_owner_id: Optional[int] = Field(foreign_key="users.id", default=None)
+    previous_owner_id: Optional[str] = Field(foreign_key="users.id", default=None)
     transferred_at: Optional[datetime] = None
     
     # QR Payment
@@ -176,13 +176,13 @@ class Match(SQLModel, table=True):
     match_type: str = Field(default="single")  # single, bo2, bo3
     
     # Team A
-    team_a_player_1_id: int = Field(foreign_key="users.id")
-    team_a_player_2_id: Optional[int] = Field(foreign_key="users.id", default=None)
+    team_a_player_1_id: str = Field(foreign_key="users.id")
+    team_a_player_2_id: Optional[str] = Field(foreign_key="users.id", default=None)
     team_a_score: Optional[int] = None
     
     # Team B
-    team_b_player_1_id: int = Field(foreign_key="users.id")
-    team_b_player_2_id: Optional[int] = Field(foreign_key="users.id", default=None)
+    team_b_player_1_id: str = Field(foreign_key="users.id")
+    team_b_player_2_id: Optional[str] = Field(foreign_key="users.id", default=None)
     team_b_score: Optional[int] = None
     
     # Results
@@ -211,7 +211,7 @@ class InboxMessage(SQLModel, table=True):
     __tablename__ = "inbox_messages"
     
     id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="users.id")
+    user_id: str = Field(foreign_key="users.id")
     title: str
     message: str
     message_type: str = Field(default="notification")  # payment, notification, invite, result
@@ -249,10 +249,10 @@ class PreMatch(SQLModel, table=True):
     match_order: int = Field(default=1)
     
     # Players
-    team_a_player_1_id: int = Field(foreign_key="users.id")
-    team_a_player_2_id: Optional[int] = Field(foreign_key="users.id", default=None)
-    team_b_player_1_id: int = Field(foreign_key="users.id")
-    team_b_player_2_id: Optional[int] = Field(foreign_key="users.id", default=None)
+    team_a_player_1_id: str = Field(foreign_key="users.id")
+    team_a_player_2_id: Optional[str] = Field(foreign_key="users.id", default=None)
+    team_b_player_1_id: str = Field(foreign_key="users.id")
+    team_b_player_2_id: Optional[str] = Field(foreign_key="users.id", default=None)
     
     status: str = Field(default="queued")  # queued, on_deck, active, cancelled
     created_at: datetime = Field(default_factory=datetime.utcnow)
