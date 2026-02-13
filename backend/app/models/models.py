@@ -1,7 +1,16 @@
 from datetime import datetime
 from typing import Optional, List
+from enum import Enum
 from sqlmodel import SQLModel, Field, Relationship
 from sqlalchemy import UniqueConstraint, Index, Column, JSON
+
+# ============= ENUMS =============
+
+class UserRole(str, Enum):
+    OWNER = "owner"
+    MODERATOR = "moderator"
+    MEMBER = "member"
+    ADMIN = "admin"
 
 # ============= LINK TABLES (No relationships, just FKs) =============
 
@@ -10,6 +19,7 @@ class ClubMember(SQLModel, table=True):
     
     club_id: int = Field(foreign_key="clubs.id", primary_key=True)
     user_id: int = Field(foreign_key="users.id", primary_key=True)
+    role: str = Field(default="member")  # owner, moderator, member
     joined_at: datetime = Field(default_factory=datetime.utcnow)
 
 class ClubModerator(SQLModel, table=True):
