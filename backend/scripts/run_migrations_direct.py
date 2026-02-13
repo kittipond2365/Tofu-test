@@ -52,6 +52,8 @@ def migrate():
         
         # Add columns to clubs table
         club_columns = [
+            ("clubs", "invite_code", "VARCHAR"),
+            ("clubs", "invite_qr_url", "VARCHAR"),
             ("clubs", "payment_qr_url", "VARCHAR"),
             ("clubs", "payment_method_note", "VARCHAR"),
             ("clubs", "updated_at", "TIMESTAMP"),

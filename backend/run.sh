@@ -4,6 +4,10 @@ set -e
 echo "🔄 Starting database migrations..."
 echo "📅 $(date)"
 
+# Run clubs column fix first (idempotent)
+echo "🔧 Running clubs columns fix..."
+python scripts/fix_clubs_columns.py
+
 # Try Alembic first, if it fails, use direct migration as fallback
 if alembic upgrade head 2>&1; then
     echo "✅ Alembic migration successful"
