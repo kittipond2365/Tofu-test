@@ -236,8 +236,13 @@ class MatchBase(BaseModel):
     team_b_player_2_id: Optional[str] = None
 
 
-class MatchCreate(MatchBase):
-    pass
+class MatchCreate(BaseModel):
+    """Match creation schema - omit all fields for auto-matchmaking"""
+    court_number: Optional[int] = Field(default=None, ge=1, le=20)
+    team_a_player_1_id: Optional[str] = None
+    team_a_player_2_id: Optional[str] = None
+    team_b_player_1_id: Optional[str] = None
+    team_b_player_2_id: Optional[str] = None
 
 
 class MatchUpdateScore(BaseModel):

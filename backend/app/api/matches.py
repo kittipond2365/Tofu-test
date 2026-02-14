@@ -182,7 +182,8 @@ async def create_match(
     if not _can_manage(membership.role):
         raise HTTPException(status_code=403, detail="Only admin/organizer can create matches")
 
-    if payload is None:
+    # Auto-matchmaking when no payload or empty payload (no player_ids specified)
+    if payload is None or (payload.team_a_player_1_id is None and payload.team_b_player_1_id is None):
         payload = await _build_auto_match(db, session_id)
 
     players = [
