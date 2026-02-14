@@ -5,6 +5,8 @@ on:
     branches: [main]
   schedule:
     - cron: '0 */6 * * *'  # Every 6 hours
+  repository_dispatch:
+    types: [deploy-completed]
   workflow_dispatch:
 
 jobs:
