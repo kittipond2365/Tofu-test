@@ -3,12 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Calendar, MapPin, Clock, Users, FileText, Plus } from 'lucide-react';
+import { MapPin, Users, FileText, Plus } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 import { ProtectedLayout } from '@/components/layout/protected-layout';
 import { Navbar } from '@/components/layout/navbar';
 import { PageHeader } from '@/components/shared';
-import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -36,12 +35,12 @@ export default function CreateSessionPage({ params }: { params: { clubId: string
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.title.trim() || !form.location.trim() || !form.start_time || !form.end_time) {
-      showError('กรุณากรอกข้อมูล', 'กรุณากรอกข้อมูลให้ครบถ้วน');
+    if (!form.title.trim() || !form.start_time) {
+      showError('กรุณากรอกข้อมูล', 'กรุณากรอกชื่อ Session และเวลาเริ่ม');
       return;
     }
 
-    if (new Date(form.end_time) <= new Date(form.start_time)) {
+    if (form.end_time && new Date(form.end_time) <= new Date(form.start_time)) {
       showError('เวลาไม่ถูกต้อง', 'เวลาสิ้นสุดต้องมากกว่าเวลาเริ่ม');
       return;
     }
@@ -51,7 +50,7 @@ export default function CreateSessionPage({ params }: { params: { clubId: string
       const payload = {
         ...form,
         start_time: new Date(form.start_time).toISOString(),
-        end_time: new Date(form.end_time).toISOString(),
+        end_time: form.end_time ? new Date(form.end_time).toISOString() : undefined,
       };
       const s = await apiClient.createSession(params.clubId, payload);
       await queryClient.invalidateQueries({ queryKey: ['sessions', params.clubId] });
@@ -99,12 +98,11 @@ export default function CreateSessionPage({ params }: { params: { clubId: string
               />
 
               <Input
-                label="สนาม / สถานที่"
+                label="สนาม / สถานที่ (ไม่บังคับ)"
                 placeholder="เช่น สนามแบด ABC ลาดพร้าว"
                 value={form.location}
                 onChange={(e) => setForm({ ...form, location: e.target.value })}
                 leftIcon={<MapPin className="w-5 h-5" />}
-                required
               />
 
               <div className="grid grid-cols-2 gap-4">
@@ -116,11 +114,10 @@ export default function CreateSessionPage({ params }: { params: { clubId: string
                   required
                 />
                 <Input
-                  label="วัน-เวลาสิ้นสุด"
+                  label="วัน-เวลาสิ้นสุด (ไม่บังคับ)"
                   type="datetime-local"
                   value={form.end_time}
                   onChange={(e) => setForm({ ...form, end_time: e.target.value })}
-                  required
                 />
               </div>
 

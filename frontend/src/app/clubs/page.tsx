@@ -21,9 +21,16 @@ export default function ClubsPage() {
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  const { data: clubs, isLoading, error } = useQuery({
+  const { data: clubs = [], isLoading, error } = useQuery({
     queryKey: ['clubs'],
-    queryFn: apiClient.getClubs,
+    queryFn: async () => {
+      const response = await apiClient.getClubs() as unknown;
+      if (Array.isArray(response)) return response;
+      if (response && typeof response === 'object' && 'clubs' in response && Array.isArray((response as { clubs: ClubResponse[] }).clubs)) {
+        return (response as { clubs: ClubResponse[] }).clubs;
+      }
+      return [];
+    },
   });
 
   // Filter and sort clubs
@@ -209,6 +216,21 @@ export default function ClubsPage() {
               ) : undefined
             }
           />
+        )}
+
+
+        {!isLoading && !error && filteredClubs.length > 0 && (
+          <div className="mb-6 flex flex-wrap gap-2">
+            {filteredClubs.map((club) => (
+              <Link
+                key={`quick-${club.id}`}
+                href={`/clubs/${club.id}`}
+                className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm text-emerald-700 hover:bg-emerald-100"
+              >
+                {club.name}
+              </Link>
+            ))}
+          </div>
         )}
 
         {/* Clubs Grid/List */}

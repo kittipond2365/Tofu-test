@@ -83,7 +83,7 @@ export const apiClient = {
     const registrations = (await api.get(`/sessions/${sessionId}/registrations`)).data;
     return { ...session, registrations };
   },
-  createSession: async (clubId: string, data: { title: string; description?: string; location: string; start_time: string; end_time: string; max_participants: number }): Promise<SessionResponse> => (await api.post(`/clubs/${clubId}/sessions`, data)).data,
+  createSession: async (clubId: string, data: { title: string; description?: string; location?: string; start_time: string; end_time?: string; max_participants: number }): Promise<SessionResponse> => (await api.post(`/clubs/${clubId}/sessions`, data)).data,
   openRegistration: async (sessionId: string): Promise<void> => { await api.post(`/sessions/${sessionId}/open`); },
 
   registerForSession: async (sessionId: string): Promise<void> => { await api.post(`/sessions/${sessionId}/register`); },

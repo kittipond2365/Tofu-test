@@ -3,22 +3,12 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
-import {
-  Trophy,
-  Users,
-  Calendar,
-  User,
-  LogOut,
-  Menu,
-  X,
-  ChevronRight,
-  BarChart3,
-  Settings,
-} from 'lucide-react';
+import { Trophy, Users, User, LogOut, Menu, X, ChevronRight, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
 
 const navItems = [
+  { href: '/', label: 'ก๊วนของฉัน', icon: Home, description: 'ก๊วนที่คุณเข้าร่วม' },
   { href: '/clubs', label: 'ก๊วนแบด', icon: Users, description: 'ดูก๊วนทั้งหมด' },
   { href: '/profile', label: 'โปรไฟล์', icon: User, description: 'ข้อมูลส่วนตัว & สถิติ' },
 ];
@@ -47,7 +37,7 @@ export function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link href="/clubs" className="flex items-center gap-2.5 group">
+            <Link href="/" className="flex items-center gap-2.5 group">
               <div className="w-9 h-9 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/25 group-hover:shadow-emerald-500/40 group-hover:scale-105 transition-all duration-300">
                 <Trophy className="w-5 h-5 text-white" />
               </div>

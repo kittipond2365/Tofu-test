@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import List, Optional
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, model_validator
 from enum import Enum
 
 
@@ -152,7 +152,11 @@ class SessionBase(BaseModel):
 
 
 class SessionCreate(SessionBase):
-    pass
+    @model_validator(mode='after')
+    def validate_end_time(self):
+        if self.end_time is not None and self.end_time <= self.start_time:
+            raise ValueError('End time must be after start time')
+        return self
 
 
 class SessionUpdate(BaseModel):
