@@ -48,11 +48,18 @@ export default function CreateSessionPage({ params }: { params: { clubId: string
     setIsSubmitting(true);
     try {
       const payload = {
-        ...form,
+        title: form.title.trim(),
+        description: form.description.trim() || undefined,
+        location: form.location.trim() || undefined,
         start_time: new Date(form.start_time).toISOString(),
         end_time: form.end_time ? new Date(form.end_time).toISOString() : undefined,
+        max_participants: Number(form.max_participants) || 4,
       };
 
+      console.log('Submitting session data:', form);
+      console.log('Start time:', form.start_time);
+      console.log('End time:', form.end_time);
+      console.log('Type of start_time:', typeof form.start_time);
       console.log('Create session payload:', {
         clubId: params.clubId,
         ...payload,

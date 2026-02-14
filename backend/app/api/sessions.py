@@ -35,6 +35,9 @@ async def create_session(
     db: AsyncSession = Depends(get_db),
 ):
     try:
+        logger.info("Creating session payload=%s", payload.model_dump())
+        logger.info("Session fields title=%s start=%s end=%s club_id=%s", payload.title, payload.start_time, payload.end_time, club_id)
+
         if not payload.title or not payload.title.strip():
             raise HTTPException(status_code=400, detail="Title is required")
 

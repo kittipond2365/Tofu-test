@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import List, Optional
-from pydantic import BaseModel, EmailStr, Field, model_validator
+from pydantic import BaseModel, EmailStr, Field, model_validator, field_validator
 from enum import Enum
 
 
@@ -152,6 +152,26 @@ class SessionBase(BaseModel):
     start_time: datetime
     end_time: Optional[datetime] = None
     max_participants: int = Field(default=20, ge=1, le=100)
+
+    @field_validator("description", "location", mode="before")
+    @classmethod
+    def empty_string_to_none(cls, v):
+        if isinstance(v, str) and not v.strip():
+            return None
+        return v
+
+    @field_validator("start_time", "end_time", mode="before")
+    @classmethod
+    def parse_datetime_string(cls, v):
+        if isinstance(v, str):
+            raw = v.strip()
+            if not raw:
+                return None
+            try:
+                return datetime.fromisoformat(raw.replace("Z", "+00:00"))
+            except ValueError:
+                return v
+        return v
 
 
 class SessionCreate(SessionBase):
