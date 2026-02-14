@@ -1,92 +1,48 @@
-"""
-Simple in-memory OAuth state storage (Redis-free fallback).
-
-- One-time use state tokens
-- Optional IP binding
-- Automatic expiry cleanup on access
-"""
-
+import redis.asyncio as aioredis
 from datetime import datetime, timedelta
-from typing import Dict, Optional, TypedDict
-import threading
+from app.core.config import get_settings
 
+settings = get_settings()
+redis_client = None
 
-class StoredOAuthState(TypedDict):
-    ip: str
-    expires: datetime
+async def get_redis_client():
+    global redis_client
+    if redis_client is None and settings.REDIS_URL:
+        redis_client = aioredis.from_url(
+            settings.REDIS_URL,
+            encoding="utf-8",
+            decode_responses=True
+        )
+    return redis_client
 
-
-_oauth_states: Dict[str, StoredOAuthState] = {}
-_lock = threading.Lock()
-
-
-def _utcnow() -> datetime:
-    return datetime.utcnow()
-
-
-def _cleanup_expired(now: Optional[datetime] = None) -> None:
-    current = now or _utcnow()
-    expired_keys = [k for k, v in _oauth_states.items() if v["expires"] <= current]
-    for key in expired_keys:
-        _oauth_states.pop(key, None)
-
-
-async def store_oauth_state(state: str, ip_address: str, expires_in: int = 600) -> bool:
-    """Store OAuth state in memory with expiry."""
-    try:
-        with _lock:
-            _cleanup_expired()
-            _oauth_states[state] = {
-                "ip": ip_address,
-                "expires": _utcnow() + timedelta(seconds=expires_in),
-            }
-        return True
-    except Exception:
-        return False
-
+async def store_oauth_state(state: str, ip_address: str, expires_in: int = 600):
+    """Store OAuth state in Redis with expiration"""
+    r = await get_redis_client()
+    if r:
+        key = f"oauth_state:{state}"
+        await r.setex(key, expires_in, ip_address)
+    else:
+        # Fallback: don't store (will fail validation, but safe)
+        pass
 
 async def validate_oauth_state(state: str, ip_address: str) -> bool:
-    """Validate and consume one-time OAuth state token."""
-    try:
-        with _lock:
-            _cleanup_expired()
-            stored = _oauth_states.pop(state, None)
-
-            if not stored:
-                return False
-
-            if stored["expires"] <= _utcnow():
-                return False
-
-            # Allow unknown IPs to avoid proxy-related false negatives.
-            if stored["ip"] in ("", "unknown") or ip_address in ("", "unknown"):
-                return True
-
-            return stored["ip"] == ip_address
-    except Exception:
+    """Validate OAuth state from Redis"""
+    r = await get_redis_client()
+    if not r:
         return False
+    
+    key = f"oauth_state:{state}"
+    stored_ip = await r.get(key)
+    
+    if stored_ip and stored_ip == ip_address:
+        # Delete after successful validation (one-time use)
+        await r.delete(key)
+        return True
+    return False
 
-
-# Backward-compatible helper for existing imports/usages.
-async def get_oauth_state(state: str) -> Optional[str]:
-    """Get and consume state, returning stored IP if valid and not expired."""
-    try:
-        with _lock:
-            _cleanup_expired()
-            stored = _oauth_states.pop(state, None)
-            if not stored:
-                return None
-            if stored["expires"] <= _utcnow():
-                return None
-            return stored["ip"]
-    except Exception:
-        return None
-
-
-async def delete_oauth_state(state: str) -> None:
-    """Delete OAuth state from memory."""
-    try:
-        with _lock:
-            _oauth_states.pop(state, None)
-    except Exception:
-        pass
+async def close_oauth_redis():
+    """Close Redis connection"""
+    global redis_client
+    if redis_client:
+        await redis_client.close()
+        redis_client = None
