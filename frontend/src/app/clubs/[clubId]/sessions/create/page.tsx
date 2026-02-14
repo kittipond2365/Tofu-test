@@ -63,13 +63,19 @@ export default function CreateSessionPage({ params }: { params: { clubId: string
       success('สร้าง Session สำเร็จ! 🏸', `"${s.title}" พร้อมเปิดรับคนแล้ว`);
       router.push(`/clubs/${params.clubId}/sessions/${s.id}`);
     } catch (err: any) {
-      console.error('Create session error:', {
-        message: err?.message,
-        status: err?.response?.status,
-        data: err?.response?.data,
-      });
-      const detail = err?.response?.data?.detail || err?.message || 'ไม่สามารถสร้าง Session ได้ กรุณาลองใหม่';
-      showError('สร้าง Session ไม่สำเร็จ', detail);
+      const responseData = err?.response?.data;
+      const rawDetail = responseData?.detail;
+
+      const errorMessage =
+        (typeof rawDetail === 'string' ? rawDetail : null) ||
+        (typeof responseData?.msg === 'string' ? responseData.msg : null) ||
+        (typeof responseData?.message === 'string' ? responseData.message : null) ||
+        (typeof responseData === 'string' ? responseData : null) ||
+        (typeof err?.message === 'string' ? err.message : null) ||
+        'สร้าง Session ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง';
+
+      showError('สร้าง Session ไม่สำเร็จ', errorMessage);
+      console.error('Create session error:', responseData);
     } finally {
       setIsSubmitting(false);
     }
