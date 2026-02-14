@@ -41,8 +41,16 @@ async def ws_test():
 async def startup_event():
     cfg = get_settings()
     logger.info("Starting up Badminton API", app_name=cfg.APP_NAME)
-    await get_redis()
-    logger.info("Redis connected")
+    
+    # Try to connect to Redis if configured (optional)
+    if cfg.REDIS_URL and cfg.REDIS_URL.strip():
+        try:
+            await get_redis()
+            logger.info("Redis connected")
+        except Exception as e:
+            logger.warning(f"Redis connection failed (optional): {e}")
+    else:
+        logger.info("Redis not configured, skipping")
 
     if cfg.FCM_ENABLED:
         notification_service.configure_push(
@@ -66,7 +74,10 @@ async def startup_event():
 @base_app.on_event("shutdown")
 async def shutdown_event():
     logger.info("Shutting down Badminton API")
-    await close_redis()
+    try:
+        await close_redis()
+    except Exception:
+        pass  # Redis might not be connected
     await async_engine.dispose()
 
 
