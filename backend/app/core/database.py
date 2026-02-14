@@ -7,16 +7,9 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
-# Check if using SQLite (for local testing)
-IS_SQLITE = settings.DATABASE_URL.startswith("sqlite")
-
-if IS_SQLITE:
-    # SQLite requires aiosqlite driver
-    async_database_url = settings.DATABASE_URL.replace("sqlite:///", "sqlite+aiosqlite:///")
-    sync_database_url = settings.DATABASE_URL_SYNC
-else:
-    async_database_url = settings.DATABASE_URL
-    sync_database_url = settings.DATABASE_URL_SYNC
+# PostgreSQL-only database URLs
+async_database_url = settings.DATABASE_URL
+sync_database_url = settings.DATABASE_URL_SYNC
 
 # Async engine for FastAPI
 async_engine = create_async_engine(

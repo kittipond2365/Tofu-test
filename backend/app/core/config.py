@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     
     # Database - Store raw URL from env
     DATABASE_URL_RAW: str = Field(
-        default="postgresql+asyncpg://postgres:postgres@localhost:5432/badminton_db",
+        default="postgresql+asyncpg://user:pass@localhost/db",
         alias="DATABASE_URL"
     )
     
@@ -20,9 +20,6 @@ class Settings(BaseSettings):
     def DATABASE_URL(self) -> str:
         """URL for async operations (asyncpg)"""
         url = self.DATABASE_URL_RAW
-        # Support SQLite for local testing
-        if url.startswith("sqlite"):
-            return url
         # Convert postgres:// or postgresql:// to postgresql+asyncpg://
         if url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql+asyncpg://", 1)
@@ -34,9 +31,6 @@ class Settings(BaseSettings):
     def DATABASE_URL_SYNC(self) -> str:
         """URL for sync operations (alembic, direct SQL) - uses psycopg2"""
         url = self.DATABASE_URL_RAW
-        # Support SQLite for local testing
-        if url.startswith("sqlite"):
-            return url
         # Convert to postgresql+psycopg2://
         if url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql+psycopg2://", 1)
@@ -96,3 +90,6 @@ class Settings(BaseSettings):
 @lru_cache()
 def get_settings() -> Settings:
     return Settings()
+
+
+settings = get_settings()
