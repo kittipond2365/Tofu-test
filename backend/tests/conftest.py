@@ -13,9 +13,11 @@ os.environ.setdefault("DATABASE_URL", f"sqlite+aiosqlite:///{TEST_DB_PATH}")
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
 
 from app.core.database import async_engine
-from app.main import app
+from app.main import base_app
 from app.models import models  # noqa: F401
 import app.api.clubs as clubs_api
+
+app = base_app  # Use base_app directly for testing (without socketio wrapper)
 
 
 @pytest_asyncio.fixture(autouse=True)
