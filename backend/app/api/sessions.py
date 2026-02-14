@@ -60,13 +60,19 @@ async def create_session(
         if not club:
             raise HTTPException(status_code=404, detail="Club not found")
 
+        # Ensure datetime is naive (no timezone) for PostgreSQL
+        def make_naive(dt):
+            if dt and dt.tzinfo:
+                return dt.replace(tzinfo=None)
+            return dt
+        
         session = Session(
             club_id=club_id,
             title=payload.title.strip(),
             description=payload.description,
             location=payload.location,
-            start_time=payload.start_time,
-            end_time=payload.end_time,
+            start_time=make_naive(payload.start_time),
+            end_time=make_naive(payload.end_time),
             max_participants=payload.max_participants,
             status=SessionStatus.DRAFT,
             created_by=user_id,
