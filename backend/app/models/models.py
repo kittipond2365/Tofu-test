@@ -1,13 +1,15 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Optional, List
 from enum import Enum
 import uuid
 from sqlmodel import SQLModel, Field, Relationship
 from sqlalchemy import UniqueConstraint, Column, JSON
 
+from app.core.utils import utc_now
+
 
 def now_utc() -> datetime:
-    return datetime.now(timezone.utc)
+    return utc_now()
 
 
 # ============= ENUMS =============

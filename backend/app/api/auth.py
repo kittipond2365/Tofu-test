@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
+from datetime import datetime
 import uuid
 
 from app.core.database import get_db
@@ -203,6 +204,7 @@ async def line_callback(
         line_user_id=line_user_id,
         picture_url=picture_url,
         is_verified=True,
+        created_at=datetime.utcnow(),
     )
     
     db.add(new_user)

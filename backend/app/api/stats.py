@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from app.core.utils import utc_now
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -149,7 +149,7 @@ async def get_user_stats(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    start_month = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    start_month = utc_now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     matches_this_month = (
         await db.execute(
             select(func.count(Match.id)).where(
@@ -203,7 +203,7 @@ async def get_player_club_stats(
 
     cm, u = row
 
-    start_month = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    start_month = utc_now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     matches_this_month = (
         await db.execute(
             select(func.count(Match.id))
