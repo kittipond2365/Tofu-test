@@ -5,7 +5,7 @@ export type MatchStatus = 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
 
 export interface TokenResponse { access_token: string; refresh_token: string; token_type: string; expires_in: number; }
 export interface UserResponse { id: string; email: string; full_name: string; display_name?: string; phone?: string; avatar_url?: string; total_matches: number; wins: number; losses: number; rating: number; is_active: boolean; created_at: string; }
-export interface ClubResponse { id: string; name: string; slug: string; description?: string; location?: string; max_members: number; is_public: boolean; created_at: string; member_count: number; }
+export interface ClubResponse { id: string; name: string; slug: string; description?: string; location?: string; max_members: number; is_public: boolean; created_at: string; member_count: number; owner_id?: string; owner_name?: string; upcoming_sessions_count?: number; last_activity_at?: string; }
 export interface ClubMemberResponse { id: string; user_id: string; role: UserRole; full_name: string; display_name?: string; avatar_url?: string; matches_in_club: number; rating_in_club: number; joined_at: string; }
 export interface ClubDetailResponse extends ClubResponse { members: ClubMemberResponse[]; }
 export interface SessionResponse { id: string; club_id: string; title: string; description?: string; location: string; start_time: string; end_time: string; max_participants: number; status: SessionStatus; created_by: string; created_at: string; confirmed_count: number; waitlist_count: number; participant_count?: number; }

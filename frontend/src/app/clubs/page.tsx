@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Users, Search, Grid3X3, List, Filter } from 'lucide-react';
+import { Plus, Users, Search, Grid3X3, List } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 import { ProtectedLayout } from '@/components/layout/protected-layout';
 import { Navbar } from '@/components/layout/navbar';
@@ -218,27 +218,12 @@ export default function ClubsPage() {
           />
         )}
 
-
-        {!isLoading && !error && filteredClubs.length > 0 && (
-          <div className="mb-6 flex flex-wrap gap-2">
-            {filteredClubs.map((club) => (
-              <Link
-                key={`quick-${club.id}`}
-                href={`/clubs/${club.id}`}
-                className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm text-emerald-700 hover:bg-emerald-100"
-              >
-                {club.name}
-              </Link>
-            ))}
-          </div>
-        )}
-
         {/* Clubs Grid/List */}
         {!isLoading && !error && filteredClubs.length > 0 && (
           <div
             className={
               viewMode === 'grid'
-                ? 'grid gap-5 sm:grid-cols-2 lg:grid-cols-3 stagger-children'
+                ? 'grid gap-6 sm:grid-cols-2 xl:grid-cols-3 stagger-children'
                 : 'space-y-3 stagger-children'
             }
           >

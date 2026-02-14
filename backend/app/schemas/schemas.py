@@ -124,11 +124,14 @@ class ClubMemberResponse(BaseModel):
 class ClubResponse(ClubBase):
     id: str
     owner_id: Optional[str] = None
+    owner_name: Optional[str] = None
     is_verified: bool = False
     verified_by: Optional[str] = None
     verified_at: Optional[datetime] = None
     created_at: datetime
     member_count: int = 0
+    upcoming_sessions_count: int = 0
+    last_activity_at: Optional[datetime] = None
     
     class Config:
         from_attributes = True

@@ -52,13 +52,25 @@ export default function CreateSessionPage({ params }: { params: { clubId: string
         start_time: new Date(form.start_time).toISOString(),
         end_time: form.end_time ? new Date(form.end_time).toISOString() : undefined,
       };
+
+      console.log('Create session payload:', {
+        clubId: params.clubId,
+        ...payload,
+      });
+
       const s = await apiClient.createSession(params.clubId, payload);
       await queryClient.invalidateQueries({ queryKey: ['sessions', params.clubId] });
       success('สร้าง Session สำเร็จ! 🏸', `"${s.title}" พร้อมเปิดรับคนแล้ว`);
       router.push(`/clubs/${params.clubId}/sessions/${s.id}`);
     } catch (err: any) {
-      const detail = err?.response?.data?.detail || 'ไม่สามารถสร้าง Session ได้ กรุณาลองใหม่';
+      console.error('Create session error:', {
+        message: err?.message,
+        status: err?.response?.status,
+        data: err?.response?.data,
+      });
+      const detail = err?.response?.data?.detail || err?.message || 'ไม่สามารถสร้าง Session ได้ กรุณาลองใหม่';
       showError('สร้าง Session ไม่สำเร็จ', detail);
+    } finally {
       setIsSubmitting(false);
     }
   };

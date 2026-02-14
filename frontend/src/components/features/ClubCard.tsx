@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Users, MapPin, ChevronRight, Crown, Shield, User } from 'lucide-react';
+import { Users, MapPin, ChevronRight, Crown, Shield, User, CalendarDays, Clock3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ClubResponse } from '@/lib/types';
 
@@ -32,6 +32,19 @@ function getInitials(name: string): string {
 export function ClubCard({ club, view = 'grid' }: ClubCardProps) {
   const gradient = getClubGradient(club.name);
   const isFull = club.member_count >= club.max_members;
+  const upcomingCount = club.upcoming_sessions_count ?? 0;
+  const createdDate = new Date(club.created_at).toLocaleDateString('th-TH', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+  const lastActivityText = club.last_activity_at
+    ? new Date(club.last_activity_at).toLocaleDateString('th-TH', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      })
+    : 'ยังไม่มีกิจกรรม';
 
   if (view === 'list') {
     return (
@@ -65,18 +78,23 @@ export function ClubCard({ club, view = 'grid' }: ClubCardProps) {
             </span>
           </div>
           <p className="text-sm text-neutral-500 truncate">@{club.slug}</p>
-          <div className="flex items-center gap-4 mt-1.5 text-sm text-neutral-400">
+          <div className="flex flex-wrap items-center gap-3 mt-1.5 text-sm text-neutral-400">
             <span className="flex items-center gap-1">
               <Users className="w-3.5 h-3.5" />
               {club.member_count}/{club.max_members}
             </span>
+            <span className="flex items-center gap-1">
+              <CalendarDays className="w-3.5 h-3.5" />
+              {upcomingCount} sessions
+            </span>
             {club.location && (
-              <span className="flex items-center gap-1 truncate">
+              <span className="flex items-center gap-1 truncate max-w-[200px]">
                 <MapPin className="w-3.5 h-3.5" />
                 {club.location}
               </span>
             )}
           </div>
+          <p className="text-xs text-neutral-500 mt-1">สร้างโดย {club.owner_name || 'ไม่ระบุ'}</p>
         </div>
 
         {/* Arrow */}
@@ -120,35 +138,43 @@ export function ClubCard({ club, view = 'grid' }: ClubCardProps) {
           </p>
 
           {/* Stats */}
-          <div className="flex items-center gap-4 mb-4 text-sm text-neutral-500">
-            <div className="flex items-center gap-1.5 bg-neutral-50 px-2.5 py-1 rounded-lg">
-              <Users className="w-4 h-4 text-emerald-500" />
-              <span className="font-medium text-neutral-700">{club.member_count}</span>
-              <span className="text-neutral-400">/{club.max_members}</span>
+          <div className="grid grid-cols-1 gap-2 mb-4 text-sm text-neutral-600">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 bg-neutral-50 px-2.5 py-1 rounded-lg">
+                <Users className="w-4 h-4 text-emerald-500" />
+                <span className="font-medium text-neutral-700">{club.member_count}</span>
+                <span className="text-neutral-400">/{club.max_members}</span>
+              </span>
+              <span className="inline-flex items-center gap-1.5 bg-neutral-50 px-2.5 py-1 rounded-lg">
+                <CalendarDays className="w-4 h-4 text-emerald-500" />
+                <span className="font-medium text-neutral-700">{upcomingCount}</span>
+                <span className="text-neutral-400">ที่กำลังจะมาถึง</span>
+              </span>
             </div>
-            {club.location && (
-              <div className="flex items-center gap-1.5 text-neutral-500 truncate">
-                <MapPin className="w-4 h-4 flex-shrink-0" />
-                <span className="truncate max-w-[100px]">{club.location}</span>
-              </div>
-            )}
+            <div className="flex items-center gap-1.5 truncate">
+              <MapPin className="w-4 h-4 flex-shrink-0 text-neutral-400" />
+              <span className="truncate">{club.location || 'ยังไม่ระบุสถานที่'}</span>
+            </div>
+            <div className="text-sm text-neutral-500">สร้างโดย {club.owner_name || 'ไม่ระบุ'}</div>
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between pt-4 border-t border-neutral-100">
-            <div className="text-xs text-neutral-400">
-              เปิดก๊วนเมื่อ{' '}
-              {new Date(club.created_at).toLocaleDateString('th-TH', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-              })}
+          <div className="space-y-2 pt-4 border-t border-neutral-100">
+            <div className="flex items-center justify-between text-xs text-neutral-400">
+              <span>สร้างเมื่อ {createdDate}</span>
+              <span className="inline-flex items-center gap-1">
+                <Clock3 className="w-3.5 h-3.5" />
+                เคลื่อนไหวล่าสุด {lastActivityText}
+              </span>
             </div>
 
-            <span className="flex items-center gap-1 text-sm font-medium text-emerald-600 group-hover:text-emerald-700">
-              ดูก๊วน
-              <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-neutral-500">รายละเอียดก๊วน</span>
+              <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 group-hover:bg-emerald-100">
+                เข้าร่วมหรือดูก๊วน
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </div>
           </div>
         </div>
       </div>

@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import List
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select
@@ -19,6 +20,7 @@ from app.models.models import (
 from app.schemas.schemas import SessionCreate, SessionResponse, SessionUpdate
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 def _can_manage(role: UserRole) -> bool:
@@ -32,36 +34,48 @@ async def create_session(
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
-    membership = (
-        await db.execute(
-            select(ClubMember).where(ClubMember.club_id == club_id, ClubMember.user_id == user_id)
+    try:
+        if not payload.title or not payload.title.strip():
+            raise HTTPException(status_code=400, detail="Title is required")
+
+        if not payload.start_time:
+            raise HTTPException(status_code=400, detail="Start time is required")
+
+        if payload.end_time is not None and payload.end_time <= payload.start_time:
+            raise HTTPException(status_code=400, detail="End time must be after start time")
+
+        membership = (
+            await db.execute(
+                select(ClubMember).where(ClubMember.club_id == club_id, ClubMember.user_id == user_id)
+            )
+        ).scalar_one_or_none()
+
+        if not membership or not _can_manage(membership.role):
+            raise HTTPException(status_code=403, detail="Only admin/organizer can create session")
+
+        club = (await db.execute(select(Club).where(Club.id == club_id))).scalar_one_or_none()
+        if not club:
+            raise HTTPException(status_code=404, detail="Club not found")
+
+        session = Session(
+            club_id=club_id,
+            title=payload.title.strip(),
+            description=payload.description,
+            location=payload.location,
+            start_time=payload.start_time,
+            end_time=payload.end_time,
+            max_participants=payload.max_participants,
+            status=SessionStatus.DRAFT,
+            created_by=user_id,
         )
-    ).scalar_one_or_none()
-
-    if not membership or not _can_manage(membership.role):
-        raise HTTPException(status_code=403, detail="Only admin/organizer can create session")
-
-    if payload.end_time <= payload.start_time:
-        raise HTTPException(status_code=400, detail="end_time must be after start_time")
-
-    club = (await db.execute(select(Club).where(Club.id == club_id))).scalar_one_or_none()
-    if not club:
-        raise HTTPException(status_code=404, detail="Club not found")
-
-    session = Session(
-        club_id=club_id,
-        title=payload.title,
-        description=payload.description,
-        location=payload.location,
-        start_time=payload.start_time,
-        end_time=payload.end_time,
-        max_participants=payload.max_participants,
-        status=SessionStatus.DRAFT,
-        created_by=user_id,
-    )
-    db.add(session)
-    await db.flush()
-    return session
+        db.add(session)
+        await db.flush()
+        return session
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Failed to create session for club_id=%s user_id=%s", club_id, user_id)
+        raise HTTPException(status_code=500, detail=f"Failed to create session: {str(exc)}")
 
 
 @router.get("/clubs/{club_id}/sessions", response_model=List[SessionResponse])
