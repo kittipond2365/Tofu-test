@@ -55,11 +55,11 @@ export default function CreateSessionPage({ params }: { params: { clubId: string
       };
       const s = await apiClient.createSession(params.clubId, payload);
       await queryClient.invalidateQueries({ queryKey: ['sessions', params.clubId] });
-      success('สร้างนัดตีสำเร็จ! 🏸', `"${s.title}" พร้อมเปิดรับคนแล้ว`);
+      success('สร้าง Session สำเร็จ! 🏸', `"${s.title}" พร้อมเปิดรับคนแล้ว`);
       router.push(`/clubs/${params.clubId}/sessions/${s.id}`);
     } catch (err: any) {
-      const detail = err?.response?.data?.detail || 'ไม่สามารถสร้างนัดตีได้ กรุณาลองใหม่';
-      showError('สร้างนัดตีไม่สำเร็จ', detail);
+      const detail = err?.response?.data?.detail || 'ไม่สามารถสร้าง Session ได้ กรุณาลองใหม่';
+      showError('สร้าง Session ไม่สำเร็จ', detail);
       setIsSubmitting(false);
     }
   };
@@ -69,12 +69,12 @@ export default function CreateSessionPage({ params }: { params: { clubId: string
       <Navbar />
       <main className="page-container">
         <PageHeader
-          title="สร้างนัดตีใหม่"
-          subtitle={club?.name ? `สำหรับก๊วน ${club.name}` : 'เปิดนัดให้สมาชิกมาตีแบด'}
+          title="สร้าง Session ใหม่"
+          subtitle={club?.name ? `สำหรับก๊วน ${club.name}` : 'เปิด Session ให้สมาชิกมาตีแบด'}
           breadcrumbs={[
             { label: 'ก๊วนแบด', href: '/clubs' },
             { label: club?.name || '', href: `/clubs/${params.clubId}` },
-            { label: 'สร้างนัดตี' },
+            { label: 'สร้าง Session' },
           ]}
         />
 
@@ -82,7 +82,7 @@ export default function CreateSessionPage({ params }: { params: { clubId: string
           <div className="glass-card p-6 sm:p-8">
             <form onSubmit={submit} className="space-y-5">
               <Input
-                label="ชื่อนัดตี"
+                label="ชื่อ Session"
                 placeholder="เช่น ตีแบดวันเสาร์เช้า"
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
@@ -137,7 +137,7 @@ export default function CreateSessionPage({ params }: { params: { clubId: string
               <div className="flex gap-3 pt-2">
                 <Button type="submit" isLoading={isSubmitting} loadingText="กำลังสร้าง..." className="flex-1">
                   <Plus className="w-4 h-4" />
-                  สร้างนัดตี
+                  สร้าง Session
                 </Button>
                 <Button type="button" variant="secondary" onClick={() => router.back()}>
                   ยกเลิก

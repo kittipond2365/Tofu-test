@@ -20,7 +20,7 @@ const features = [
   },
   {
     icon: Calendar,
-    title: 'นัดตี',
+    title: 'Session',
     description: 'เปิดนัด จองสนาม นัดเวลา',
     color: 'from-violet-500 to-purple-500',
   },
@@ -126,7 +126,7 @@ export default function LoginPage() {
           </button>
 
           <p className="mt-6 text-center text-sm text-neutral-500">
-            เข้าสู่ระบบเพื่อจัดการก๊วนและนัดตีแบด
+            เข้าสู่ระบบเพื่อจัดการก๊วนและ Session แบด
           </p>
         </div>
 

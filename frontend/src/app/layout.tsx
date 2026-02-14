@@ -12,8 +12,8 @@ const inter = Inter({
 
 export const metadata = {
   title: 'Tofu Badminton | จัดการก๊วนแบดมินตัน',
-  description: 'แอปจัดการก๊วนแบด นัดตี จับคู่แมทช์ บันทึกสกอร์ ดูอันดับ ครบจบในที่เดียว',
-  keywords: 'badminton, แบดมินตัน, ก๊วนแบด, นัดตี, กีฬา',
+  description: 'แอปจัดการก๊วนแบด Session จับคู่แมทช์ บันทึกสกอร์ ดูอันดับ ครบจบในที่เดียว',
+  keywords: 'badminton, แบดมินตัน, ก๊วนแบด, Session, กีฬา',
   authors: [{ name: 'Tofu Badminton' }],
   viewport: {
     width: 'device-width',

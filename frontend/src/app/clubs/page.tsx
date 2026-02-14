@@ -71,7 +71,7 @@ export default function ClubsPage() {
         {/* Header */}
         <PageHeader
           title="ก๊วนแบดมินตัน"
-          subtitle="จัดการก๊วนแบดและนัดตีกับเพื่อนๆ"
+          subtitle="จัดการก๊วนแบดและ Session กับเพื่อนๆ"
           breadcrumbs={[{ label: 'ก๊วนแบด' }]}
           action={
             <div className="flex gap-2">

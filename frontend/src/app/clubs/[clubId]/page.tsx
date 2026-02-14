@@ -148,7 +148,7 @@ export default function ClubDetailPage({ params }: { params: { clubId: string } 
                 <Link href={`/clubs/${params.clubId}/sessions/create`}>
                   <Button className="bg-white text-neutral-900 hover:bg-neutral-100">
                     <Plus className="w-4 h-4" />
-                    สร้างนัดตี
+                    สร้าง Session
                   </Button>
                 </Link>
               </div>
@@ -168,7 +168,7 @@ export default function ClubDetailPage({ params }: { params: { clubId: string } 
               subtitle={`จาก ${club.max_members} คน`}
             />
             <StatsCard
-              title="นัดตี"
+              title="Session"
               value={stats?.total_sessions || 0}
               icon={Calendar}
               color="blue"
@@ -209,7 +209,7 @@ export default function ClubDetailPage({ params }: { params: { clubId: string } 
               >
                 {tab === 'overview' && 'ภาพรวม'}
                 {tab === 'members' && 'สมาชิก'}
-                {tab === 'sessions' && 'นัดตี'}
+                {tab === 'sessions' && 'Session'}
               </button>
             ))}
           </div>
@@ -221,7 +221,7 @@ export default function ClubDetailPage({ params }: { params: { clubId: string } 
               <div className="lg:col-span-2 space-y-6">
                 {/* Activity Chart */}
                 <div className="glass-card p-6">
-                  <h3 className="text-lg font-bold text-neutral-900 mb-4">นัดตีล่าสุด</h3>
+                  <h3 className="text-lg font-bold text-neutral-900 mb-4">Session ล่าสุด</h3>
                   {stats?.activity_data && stats.activity_data.length > 0 ? (
                     <ClubActivityChart data={stats.activity_data} />
                   ) : (
@@ -234,7 +234,7 @@ export default function ClubDetailPage({ params }: { params: { clubId: string } 
                 {/* Recent Sessions */}
                 <div className="glass-card p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-neutral-900">นัดตีที่จะมาถึง</h3>
+                    <h3 className="text-lg font-bold text-neutral-900">Session ที่จะมาถึง</h3>
                     <Link
                       href={`/clubs/${params.clubId}/sessions`}
                       className="text-sm text-emerald-600 hover:text-emerald-700 flex items-center gap-1 font-medium"
@@ -285,10 +285,10 @@ export default function ClubDetailPage({ params }: { params: { clubId: string } 
                   ) : (
                     <EmptyState
                       icon={Calendar}
-                      title="ยังไม่มีนัดตี"
-                      description="สร้างนัดตีแรกของก๊วน"
+                      title="ยังไม่มี Session"
+                      description="สร้าง Session แรกของก๊วน"
                       action={{
-                        label: 'สร้างนัดตี',
+                        label: 'สร้าง Session',
                         href: `/clubs/${params.clubId}/sessions/create`,
                       }}
                     />
@@ -310,7 +310,7 @@ export default function ClubDetailPage({ params }: { params: { clubId: string } 
                         <Calendar className="w-5 h-5 text-blue-600" />
                       </div>
                       <div className="flex-1">
-                        <p className="font-semibold text-neutral-900">นัดตีทั้งหมด</p>
+                        <p className="font-semibold text-neutral-900">Session ทั้งหมด</p>
                       </div>
                       <ChevronRight className="w-5 h-5 text-neutral-300" />
                     </Link>
@@ -409,11 +409,11 @@ export default function ClubDetailPage({ params }: { params: { clubId: string } 
 
           {activeTab === 'sessions' && (
             <div className="text-center py-12">
-              <p className="text-neutral-500 mb-4">ดูนัดตีทั้งหมดของก๊วน</p>
+              <p className="text-neutral-500 mb-4">ดู Session ทั้งหมดของก๊วน</p>
               <Link href={`/clubs/${params.clubId}/sessions`}>
                 <Button>
                   <Calendar className="w-5 h-5" />
-                  ดูนัดตีทั้งหมด
+                  ดู Session ทั้งหมด
                 </Button>
               </Link>
             </div>
