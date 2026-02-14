@@ -3,7 +3,7 @@ import pytest_asyncio
 from httpx import AsyncClient
 
 # API Configuration - use env var for CI, fallback to production for local runs
-BASE_URL = os.getenv("TEST_TARGET_URL", "https://tofubadminton-backend.onrender.com")
+BASE_URL = os.getenv("TEST_API_URL", os.getenv("TEST_TARGET_URL", "https://tofubadminton-backend.onrender.com"))
 TEST_SECRET = os.getenv("TEST_SECRET", "test-secret-for-ci-only-2024")
 
 # Store created test data for cleanup
