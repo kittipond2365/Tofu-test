@@ -73,6 +73,7 @@ export const apiClient = {
   },
 
   getClubs: async (): Promise<ClubResponse[]> => (await api.get('/clubs')).data,
+  getPublicClubs: async (): Promise<ClubResponse[]> => (await api.get('/clubs/public')).data,
   getClub: async (clubId: string): Promise<ClubDetailResponse> => (await api.get(`/clubs/${clubId}`)).data,
   createClub: async (data: { name: string; slug: string; description?: string; location?: string; max_members?: number; is_public?: boolean }): Promise<ClubResponse> => (await api.post('/clubs', data)).data,
   joinClub: async (clubId: string): Promise<void> => { await api.post(`/clubs/${clubId}/join`); },

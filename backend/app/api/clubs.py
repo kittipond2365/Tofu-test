@@ -144,6 +144,86 @@ async def list_clubs(
     return club_responses
 
 
+@router.get("/clubs/public", response_model=List[ClubResponse])
+async def list_public_clubs(
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db)
+):
+    """List all public clubs that user is not a member of"""
+    # Get user's current club memberships
+    membership_result = await db.execute(
+        select(ClubMember.club_id).where(ClubMember.user_id == user_id)
+    )
+    member_club_ids = {row[0] for row in membership_result.all()}
+    
+    # Get public clubs that user is not a member of
+    result = await db.execute(
+        select(Club)
+        .where(Club.is_public == True)
+        .where(~Club.id.in_(member_club_ids) if member_club_ids else True)
+        .order_by(Club.created_at.desc())
+    )
+    clubs = result.scalars().all()
+
+    if not clubs:
+        return []
+
+    club_ids = [club.id for club in clubs]
+
+    owner_rows = (
+        await db.execute(
+            select(Club.id, User.full_name)
+            .join(User, User.id == Club.owner_id)
+            .where(Club.id.in_(club_ids))
+        )
+    ).all()
+    owner_map = {club_id: full_name for club_id, full_name in owner_rows}
+
+    member_rows = (
+        await db.execute(
+            select(ClubMember.club_id, func.count(ClubMember.user_id))
+            .where(ClubMember.club_id.in_(club_ids))
+            .group_by(ClubMember.club_id)
+        )
+    ).all()
+    member_count_map = {club_id: count for club_id, count in member_rows}
+
+    upcoming_rows = (
+        await db.execute(
+            select(Session.club_id, func.count(Session.id))
+            .where(
+                and_(
+                    Session.club_id.in_(club_ids),
+                    Session.start_time >= func.now(),
+                    Session.status != SessionStatus.CANCELLED,
+                )
+            )
+            .group_by(Session.club_id)
+        )
+    ).all()
+    upcoming_map = {club_id: count for club_id, count in upcoming_rows}
+
+    activity_rows = (
+        await db.execute(
+            select(Session.club_id, func.max(Session.updated_at))
+            .where(Session.club_id.in_(club_ids))
+            .group_by(Session.club_id)
+        )
+    ).all()
+    activity_map = {club_id: ts for club_id, ts in activity_rows}
+
+    club_responses = []
+    for club in clubs:
+        club_data = ClubResponse.model_validate(club)
+        club_data.member_count = member_count_map.get(club.id, 0)
+        club_data.owner_name = owner_map.get(club.id)
+        club_data.upcoming_sessions_count = upcoming_map.get(club.id, 0)
+        club_data.last_activity_at = activity_map.get(club.id)
+        club_responses.append(club_data)
+
+    return club_responses
+
+
 @router.get("/clubs/{club_id}", response_model=ClubDetailResponse)
 async def get_club(
     club_id: str,

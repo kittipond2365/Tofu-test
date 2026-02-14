@@ -2,8 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
-import { Plus, Users, Search, Grid3X3, List, Globe } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Plus, Users, Search, Grid3X3, List, Globe, UserPlus, CheckCircle, Lock } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 import { ProtectedLayout } from '@/components/layout/protected-layout';
 import { Navbar } from '@/components/layout/navbar';
@@ -16,20 +16,30 @@ import type { ClubResponse } from '@/lib/types';
 
 type SortOption = 'newest' | 'members' | 'alphabetical';
 
-export default function ClubsPage() {
+export default function PublicClubsPage() {
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const { data: clubs = [], isLoading, error } = useQuery({
-    queryKey: ['clubs'],
+    queryKey: ['publicClubs'],
     queryFn: async () => {
-      const response = await apiClient.getClubs() as unknown;
+      const response = await apiClient.getPublicClubs() as unknown;
       if (Array.isArray(response)) return response;
       if (response && typeof response === 'object' && 'clubs' in response && Array.isArray((response as { clubs: ClubResponse[] }).clubs)) {
         return (response as { clubs: ClubResponse[] }).clubs;
       }
       return [];
+    },
+  });
+
+  // Join club mutation
+  const joinClubMutation = useMutation({
+    mutationFn: (clubId: string) => apiClient.joinClub(clubId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['publicClubs'] });
+      queryClient.invalidateQueries({ queryKey: ['clubs'] });
     },
   });
 
@@ -77,15 +87,15 @@ export default function ClubsPage() {
       <main className="page-container">
         {/* Header */}
         <PageHeader
-          title="ก๊วนแบดมินตัน"
-          subtitle="จัดการก๊วนแบดและ Session กับเพื่อนๆ"
-          breadcrumbs={[{ label: 'ก๊วนแบด' }]}
+          title="ก๊วนสาธารณะ"
+          subtitle="ค้นหาและเข้าร่วมก๊วนแบดมินตันที่เปิดรับสมาชิก"
+          breadcrumbs={[{ label: 'ก๊วนแบด', href: '/clubs' }, { label: 'ก๊วนสาธารณะ' }]}
           action={
             <div className="flex gap-2">
-              <Link href="/clubs/public">
+              <Link href="/clubs">
                 <Button variant="secondary" className="hidden sm:flex">
-                  <Globe className="w-4 h-4" />
-                  ก๊วนสาธารณะ
+                  <Users className="w-4 h-4" />
+                  ก๊วนของฉัน
                 </Button>
               </Link>
               <Link href="/clubs/create">
@@ -149,16 +159,6 @@ export default function ClubsPage() {
           </div>
         </div>
 
-        {/* Mobile Public Clubs Link */}
-        <div className="sm:hidden mb-4">
-          <Link href="/clubs/public">
-            <Button variant="secondary" className="w-full">
-              <Globe className="w-4 h-4" />
-              ค้นหาก๊วนสาธารณะ
-            </Button>
-          </Link>
-        </div>
-
         {/* Stats */}
         {!isLoading && clubs && (
           <div className="flex items-center gap-4 text-sm text-neutral-500 mb-6">
@@ -200,12 +200,12 @@ export default function ClubsPage() {
         {/* Empty State */}
         {!isLoading && !error && filteredClubs.length === 0 && (
           <EmptyState
-            icon={Search}
-            title={searchTerm ? 'ไม่พบก๊วนที่ค้นหา' : 'ยังไม่มีก๊วน'}
+            icon={Globe}
+            title={searchTerm ? 'ไม่พบก๊วนที่ค้นหา' : 'ไม่มีก๊วนสาธารณะ'}
             description={
               searchTerm
                 ? 'ลองค้นหาด้วยคำอื่น หรือล้างตัวกรอง'
-                : 'ตั้งก๊วนแบดของคุณ หรือเข้าร่วมก๊วนที่มีอยู่'
+                : 'ขณะนี้ยังไม่มีก๊วนสาธารณะที่เปิดรับสมาชิก หรือคุณได้เข้าร่วมก๊วนทั้งหมดแล้ว'
             }
             action={
               searchTerm
@@ -224,10 +224,10 @@ export default function ClubsPage() {
                   ล้างตัวกรอง
                 </Button>
               ) : (
-                <Link href="/clubs/public">
+                <Link href="/clubs">
                   <Button variant="secondary">
-                    <Globe className="w-4 h-4" />
-                    ค้นหาก๊วนสาธารณะ
+                    <Users className="w-4 h-4" />
+                    ดูก๊วนของฉัน
                   </Button>
                 </Link>
               )
@@ -235,7 +235,7 @@ export default function ClubsPage() {
           />
         )}
 
-        {/* Clubs Grid/List */}
+        {/* Clubs Grid/List with Join Buttons */}
         {!isLoading && !error && filteredClubs.length > 0 && (
           <div
             className={
@@ -245,7 +245,31 @@ export default function ClubsPage() {
             }
           >
             {filteredClubs.map((club) => (
-              <ClubCard key={club.id} club={club} view={viewMode} />
+              <div key={club.id} className="relative group">
+                <ClubCard club={club} view={viewMode} />
+                
+                {/* Quick Join Button */}
+                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      joinClubMutation.mutate(club.id);
+                    }}
+                    disabled={joinClubMutation.isPending && joinClubMutation.variables === club.id}
+                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-1.5 shadow-lg"
+                  >
+                    {joinClubMutation.isPending && joinClubMutation.variables === club.id ? (
+                      'กำลังเข้าร่วม...'
+                    ) : (
+                      <>
+                        <UserPlus className="w-4 h-4" />
+                        เข้าร่วม
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
         )}

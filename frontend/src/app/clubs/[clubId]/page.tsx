@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Users,
   MapPin,
@@ -15,6 +15,9 @@ import {
   Crown,
   Shield,
   User,
+  UserPlus,
+  Lock,
+  CheckCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { apiClient } from '@/lib/api';
@@ -40,6 +43,7 @@ function getClubGradient(name: string): string {
 }
 
 export default function ClubDetailPage({ params }: { params: { clubId: string } }) {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'sessions'>('overview');
 
   const { data: club, isLoading, error } = useQuery({
@@ -51,6 +55,15 @@ export default function ClubDetailPage({ params }: { params: { clubId: string } 
     queryKey: ['clubStats', params.clubId],
     queryFn: () => apiClient.getClubStats(params.clubId),
     enabled: !!club,
+  });
+
+  // Join club mutation
+  const joinClubMutation = useMutation({
+    mutationFn: () => apiClient.joinClub(params.clubId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['club', params.clubId] });
+      queryClient.invalidateQueries({ queryKey: ['clubs'] });
+    },
   });
 
   if (isLoading) {
@@ -82,6 +95,7 @@ export default function ClubDetailPage({ params }: { params: { clubId: string } 
 
   const gradient = getClubGradient(club.name);
   const isFull = club.member_count >= club.max_members;
+  const isMember = club.members?.some((m: ClubMemberResponse) => m.user_id);
 
   return (
     <ProtectedLayout>
@@ -117,6 +131,12 @@ export default function ClubDetailPage({ params }: { params: { clubId: string } 
                     {isFull ? 'เต็ม' : 'รับสมาชิก'}
                   </span>
                   <span className="text-white/60 text-sm">@{club.slug}</span>
+                  {!club.is_public && (
+                    <span className="badge border-0 bg-amber-500/90 text-white flex items-center gap-1">
+                      <Lock className="w-3 h-3" />
+                      ส่วนตัว
+                    </span>
+                  )}
                 </div>
                 <h1 className="text-3xl md:text-4xl lg:text-5xl font-black mb-3">{club.name}</h1>
                 <p className="text-white/80 max-w-2xl text-lg">{club.description || 'ไม่มีคำอธิบาย'}</p>
@@ -137,6 +157,42 @@ export default function ClubDetailPage({ params }: { params: { clubId: string } 
 
               {/* Actions */}
               <div className="flex gap-2 flex-wrap">
+                {/* Join Club Button - Show if not member */}
+                {!isMember && (
+                  <button
+                    onClick={() => joinClubMutation.mutate()}
+                    disabled={joinClubMutation.isPending || isFull || !club.is_public}
+                    className="px-4 py-2.5 bg-white text-emerald-600 hover:bg-emerald-50 rounded-xl text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {joinClubMutation.isPending ? (
+                      'กำลังเข้าร่วม...'
+                    ) : isFull ? (
+                      <>
+                        <Users className="w-4 h-4" />
+                        ก๊วนเต็ม
+                      </>
+                    ) : !club.is_public ? (
+                      <>
+                        <Lock className="w-4 h-4" />
+                        ต้องการคำเชิญ
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="w-4 h-4" />
+                        เข้าร่วมก๊วน
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {/* Show badge if already member */}
+                {isMember && (
+                  <div className="px-4 py-2.5 bg-emerald-500/90 text-white rounded-xl text-sm font-medium flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4" />
+                    คุณเป็นสมาชิกแล้ว
+                  </div>
+                )}
+
                 <button className="px-4 py-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-white text-sm font-medium transition-colors backdrop-blur-sm flex items-center gap-2">
                   <Bell className="w-4 h-4" />
                   <span className="hidden sm:inline">แจ้งเตือน</span>
@@ -145,12 +201,15 @@ export default function ClubDetailPage({ params }: { params: { clubId: string } 
                   <Share2 className="w-4 h-4" />
                   <span className="hidden sm:inline">แชร์</span>
                 </button>
-                <Link href={`/clubs/${params.clubId}/sessions/create`}>
-                  <Button className="bg-white text-neutral-900 hover:bg-neutral-100">
-                    <Plus className="w-4 h-4" />
-                    สร้าง Session
-                  </Button>
-                </Link>
+                
+                {isMember && (
+                  <Link href={`/clubs/${params.clubId}/sessions/create`}>
+                    <Button className="bg-white text-neutral-900 hover:bg-neutral-100">
+                      <Plus className="w-4 h-4" />
+                      สร้าง Session
+                    </Button>
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -184,7 +243,7 @@ export default function ClubDetailPage({ params }: { params: { clubId: string } 
               value={
                 stats?.top_players?.length
                   ? Math.round(
-                      stats.top_players.reduce((acc, p) => acc + p.rating, 0) /
+                      stats.top_players.reduce((acc: number, p: { rating: number }) => acc + p.rating, 0) /
                         stats.top_players.length
                     )
                   : 1000
@@ -263,20 +322,21 @@ export default function ClubDetailPage({ params }: { params: { clubId: string } 
                               })}
                             </p>
                           </div>
-                          <span
-                            className={cn('badge', {
-                              'badge-emerald': session.status === 'open',
-                              'badge-amber': session.status === 'full',
-                              'badge-blue': session.status === 'ongoing',
-                              'badge-neutral': session.status === 'completed',
-                            })}
-                          >
+                          <span className={cn('badge', {
+                            'badge-emerald': session.status === 'open',
+                            'badge-amber': session.status === 'full',
+                            'badge-blue': session.status === 'ongoing',
+                            'badge-neutral': session.status === 'completed',
+                            'badge-gray': session.status === 'draft',
+                          })}>
                             {session.status === 'open'
-                              ? 'เปิดรับ'
+                              ? 'เปิดรับสมัคร'
                               : session.status === 'full'
                               ? 'เต็ม'
                               : session.status === 'ongoing'
                               ? 'กำลังแข่ง'
+                              : session.status === 'draft'
+                              ? 'ร่าง'
                               : session.status}
                           </span>
                         </Link>
@@ -287,10 +347,14 @@ export default function ClubDetailPage({ params }: { params: { clubId: string } 
                       icon={Calendar}
                       title="ยังไม่มี Session"
                       description="สร้าง Session แรกของก๊วน"
-                      action={{
-                        label: 'สร้าง Session',
-                        href: `/clubs/${params.clubId}/sessions/create`,
-                      }}
+                      action={
+                        isMember
+                          ? {
+                              label: 'สร้าง Session',
+                              href: `/clubs/${params.clubId}/sessions/create`,
+                            }
+                          : undefined
+                      }
                     />
                   )}
                 </div>
@@ -334,7 +398,7 @@ export default function ClubDetailPage({ params }: { params: { clubId: string } 
                   <div className="glass-card p-6">
                     <h3 className="text-lg font-bold text-neutral-900 mb-4">ผู้เล่นยอดเยี่ยม</h3>
                     <div className="space-y-3">
-                      {stats.top_players.slice(0, 5).map((player, index) => (
+                      {stats.top_players.slice(0, 5).map((player: { user_id: string; display_name?: string; full_name: string; rating: number }, index: number) => (
                         <div key={player.user_id} className="flex items-center gap-3">
                           <div
                             className={cn(
@@ -373,7 +437,7 @@ export default function ClubDetailPage({ params }: { params: { clubId: string } 
                 </h3>
               </div>
               <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                {club.members.map((member) => (
+                {club.members.map((member: ClubMemberResponse) => (
                   <div
                     key={member.id}
                     className="flex items-center gap-3 p-4 bg-neutral-50 rounded-xl"

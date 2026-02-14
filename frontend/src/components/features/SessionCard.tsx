@@ -13,8 +13,12 @@ import {
   CheckCircle,
   XCircle,
   HelpCircle,
+  Edit3,
+  Play,
+  Ban,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatSessionTimeOnly } from '@/lib/dateUtils';
 import type { SessionResponse, SessionStatus } from '@/lib/types';
 
 interface SessionCardProps {
@@ -22,6 +26,7 @@ interface SessionCardProps {
   clubId: string;
 }
 
+// User-friendly status labels
 const statusConfig: Record<
   SessionStatus,
   {
@@ -33,7 +38,7 @@ const statusConfig: Record<
   draft: {
     label: 'ร่าง',
     className: 'badge-neutral',
-    icon: HelpCircle,
+    icon: Edit3,
   },
   upcoming: {
     label: 'เร็วๆ นี้',
@@ -41,7 +46,7 @@ const statusConfig: Record<
     icon: Clock,
   },
   open: {
-    label: 'เปิดรับ',
+    label: 'เปิดรับสมัคร',
     className: 'badge-emerald',
     icon: CheckCircle,
   },
@@ -53,12 +58,12 @@ const statusConfig: Record<
   active: {
     label: 'กำลังดำเนินการ',
     className: 'badge-purple',
-    icon: Clock,
+    icon: Play,
   },
   ongoing: {
     label: 'กำลังแข่ง',
     className: 'badge-live',
-    icon: Clock,
+    icon: Play,
   },
   completed: {
     label: 'เสร็จสิ้น',
@@ -68,7 +73,7 @@ const statusConfig: Record<
   cancelled: {
     label: 'ยกเลิก',
     className: 'badge-rose',
-    icon: XCircle,
+    icon: Ban,
   },
 };
 
@@ -113,7 +118,7 @@ export function SessionCard({ session, clubId }: SessionCardProps) {
               <div className="flex flex-wrap items-center gap-3 text-sm text-neutral-400">
                 <span className="flex items-center gap-1.5">
                   <Clock className="w-4 h-4" />
-                  {format(startDate, 'HH:mm', { locale: th })}
+                  {formatSessionTimeOnly(session.start_time)}
                 </span>
                 {session.location && (
                   <span className="flex items-center gap-1.5">

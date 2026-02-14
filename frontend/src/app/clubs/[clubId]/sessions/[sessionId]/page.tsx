@@ -6,24 +6,32 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
   Calendar, MapPin, Clock, Users, ChevronLeft, Plus,
   CheckCircle, UserCheck, UserX, Trophy, Play, Check,
-  AlertCircle
+  AlertCircle, Edit3, Lock, Unlock, Ban
 } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 import { ProtectedLayout } from '@/components/layout/protected-layout';
 import { Navbar } from '@/components/layout/navbar';
 import { PageHeader, EmptyState, LoadingSkeleton } from '@/components/shared';
 import { MatchCard } from '@/components/features/MatchCard';
-import type { SessionStatus, RegistrationStatus } from '@/lib/types';
+import { formatSessionDate, formatTimeRange } from '@/lib/dateUtils';
+import type { SessionStatus, RegistrationStatus, ClubMemberResponse } from '@/lib/types';
 
+// User-friendly status config with descriptions and actions
 const statusConfig: Record<SessionStatus, { 
   label: string; 
   className: string;
   description: string;
+  actionLabel?: string;
+  actionIcon?: typeof Unlock;
+  nextStatus?: SessionStatus;
 }> = {
   draft: { 
     label: 'ร่าง', 
     className: 'bg-gray-100 text-gray-700',
-    description: 'Session ยังไม่เปิดให้สมัคร'
+    description: 'Session ยังไม่เปิดให้สมัคร',
+    actionLabel: 'เปิดรับสมัคร',
+    actionIcon: Unlock,
+    nextStatus: 'open'
   },
   upcoming: { 
     label: 'เร็วๆ นี้', 
@@ -32,8 +40,11 @@ const statusConfig: Record<SessionStatus, {
   },
   open: { 
     label: 'เปิดรับสมัคร', 
-    className: 'bg-green-100 text-green-700',
-    description: 'สามารถสมัครเข้าร่วมได้'
+    className: 'bg-emerald-100 text-emerald-700',
+    description: 'สามารถสมัครเข้าร่วมได้',
+    actionLabel: 'ปิดรับสมัคร',
+    actionIcon: Lock,
+    nextStatus: 'full'
   },
   full: { 
     label: 'เต็ม', 
@@ -92,6 +103,13 @@ export default function SessionDetailPage({ params }: { params: { clubId: string
     queryFn: () => apiClient.getClub(params.clubId)
   });
 
+  // Check if user is admin/organizer
+  const isAdminOrOrganizer = club?.members?.some(
+    (member: ClubMemberResponse) => 
+      member.user_id === (session?.created_by) && 
+      ['admin', 'organizer', 'owner'].includes(member.role)
+  );
+
   // Mutations
   const registerMutation = useMutation({
     mutationFn: () => apiClient.registerForSession(params.sessionId),
@@ -118,7 +136,14 @@ export default function SessionDetailPage({ params }: { params: { clubId: string
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['matches', params.sessionId] })
   });
 
-  const myRegistration = session?.registrations?.find(r => 
+  const openRegistrationMutation = useMutation({
+    mutationFn: () => apiClient.openRegistration(params.sessionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['session', params.sessionId] });
+    }
+  });
+
+  const myRegistration = session?.registrations?.find((r: { status: string }) => 
     ['confirmed', 'waitlisted', 'attended'].includes(r.status)
   );
 
@@ -152,8 +177,6 @@ export default function SessionDetailPage({ params }: { params: { clubId: string
     );
   }
 
-  const startDate = new Date(session.start_time);
-  const endDate = new Date(session.end_time);
   const fillPercentage = Math.min(100, Math.round((session.confirmed_count / session.max_participants) * 100));
 
   return (
@@ -184,11 +207,31 @@ export default function SessionDetailPage({ params }: { params: { clubId: string
 
         {/* Status Banner */}
         <div className={`mb-6 p-4 rounded-xl ${status?.className} bg-opacity-50 border`}>
-          <div className="flex items-center gap-3">
-            <div className={`px-3 py-1 rounded-full text-sm font-medium ${status?.className}`}>
-              {status?.label}
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+              <div className={`px-3 py-1 rounded-full text-sm font-medium ${status?.className}`}>
+                {status?.label}
+              </div>
+              <p className="text-sm">{status?.description}</p>
             </div>
-            <p className="text-sm">{status?.description}</p>
+            
+            {/* Open Registration Button for Admin/Organizer */}
+            {session.status === 'draft' && (
+              <button
+                onClick={() => openRegistrationMutation.mutate()}
+                disabled={openRegistrationMutation.isPending}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {openRegistrationMutation.isPending ? (
+                  'กำลังเปิด...'
+                ) : (
+                  <>
+                    <Unlock className="w-4 h-4" />
+                    เปิดรับสมัคร
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
 
@@ -209,12 +252,7 @@ export default function SessionDetailPage({ params }: { params: { clubId: string
                   <div>
                     <p className="text-sm text-gray-500">วันที่</p>
                     <p className="font-medium text-gray-900">
-                      {startDate.toLocaleDateString('th-TH', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })}
+                      {formatSessionDate(session.start_time)}
                     </p>
                   </div>
                 </div>
@@ -226,8 +264,7 @@ export default function SessionDetailPage({ params }: { params: { clubId: string
                   <div>
                     <p className="text-sm text-gray-500">เวลา</p>
                     <p className="font-medium text-gray-900">
-                      {startDate.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} - 
-                      {endDate.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
+                      {formatTimeRange(session.start_time, session.end_time)}
                     </p>
                   </div>
                 </div>
@@ -376,7 +413,7 @@ export default function SessionDetailPage({ params }: { params: { clubId: string
               
               {session.registrations && session.registrations.length > 0 ? (
                 <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                  {session.registrations.map((reg) => {
+                  {session.registrations.map((reg: { id: string; display_name?: string; full_name: string; status: RegistrationStatus; waitlist_position?: number; registered_at: string }) => {
                     const regStatus = registrationStatusConfig[reg.status];
                     return (
                       <div key={reg.id} className="flex items-center gap-3">
