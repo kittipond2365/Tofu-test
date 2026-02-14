@@ -1,8 +1,5 @@
 import pytest
-
-
-# Test secret for protection layer 2
-TEST_SECRET = "test-secret-for-ci-only-2024"
+from conftest import track_club, track_session, TEST_SECRET
 
 
 @pytest.mark.asyncio
@@ -25,6 +22,7 @@ async def test_complete_user_journey(client):
     )
     assert club.status_code == 201
     club_id = club.json()["id"]
+    track_club(club_id)
 
     # 3) Create session
     session = await client.post(
@@ -34,6 +32,7 @@ async def test_complete_user_journey(client):
     )
     assert session.status_code == 201
     session_id = session.json()["id"]
+    track_session(session_id)
 
     # 4) Open registration
     opened = await client.post(f"/api/v1/sessions/{session_id}/open", headers=headers_a)

@@ -1,4 +1,5 @@
 import pytest
+from conftest import track_club, track_session
 
 
 @pytest.mark.asyncio
@@ -8,7 +9,9 @@ async def test_create_match_and_update_score(client, auth_headers, second_user_h
         json={"name": "Match Club", "slug": "match-club", "description": "desc", "is_public": True},
         headers=auth_headers,
     )
+    assert club.status_code == 201
     club_id = club.json()["id"]
+    track_club(club_id)
 
     await client.post(f"/api/v1/clubs/{club_id}/join", headers=second_user_headers)
     await client.post(f"/api/v1/clubs/{club_id}/join", headers=third_user_headers)
@@ -19,7 +22,10 @@ async def test_create_match_and_update_score(client, auth_headers, second_user_h
         json={"title": "Match Session", "start_time": "2026-02-20T20:00:00", "max_participants": 8},
         headers=auth_headers,
     )
+    assert session.status_code == 201
     session_id = session.json()["id"]
+    track_session(session_id)
+    
     await client.post(f"/api/v1/sessions/{session_id}/open", headers=auth_headers)
 
     # Register all players

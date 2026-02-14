@@ -1,45 +1,20 @@
 import os
-from pathlib import Path
-
 import pytest_asyncio
-from httpx import ASGITransport, AsyncClient
-from sqlmodel import SQLModel
+from httpx import AsyncClient
 
-# Must be set before importing app modules
-TEST_DB_PATH = Path(__file__).parent / "test.db"
-os.environ.setdefault("ENV", "testing")
-os.environ.setdefault("SECRET_KEY", "test-secret-key-for-ci-and-local-123456")
-os.environ.setdefault("DATABASE_URL", f"sqlite+aiosqlite:///{TEST_DB_PATH}")
-os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
-os.environ.setdefault("TEST_SECRET", "test-secret-for-ci-only-2024")
-
+# Production API Configuration
+BASE_URL = "https://tofubadminton-backend.onrender.com"
 TEST_SECRET = "test-secret-for-ci-only-2024"
 
-from app.core.database import async_engine
-from app.main import base_app
-from app.models import models  # noqa: F401
-import app.api.clubs as clubs_api
-
-app = base_app  # Use base_app directly for testing (without socketio wrapper)
-
-
-@pytest_asyncio.fixture(autouse=True)
-async def reset_db(monkeypatch):
-    async def _noop_cache_delete_pattern(_: str):
-        return None
-
-    monkeypatch.setattr(clubs_api, "cache_delete_pattern", _noop_cache_delete_pattern)
-
-    async with async_engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.drop_all)
-        await conn.run_sync(SQLModel.metadata.create_all)
-    yield
+# Store created test data for cleanup
+test_club_ids = []
+test_session_ids = []
 
 
 @pytest_asyncio.fixture
 async def client():
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+    """HTTP client that calls the production API directly."""
+    async with AsyncClient(base_url=BASE_URL, timeout=30.0) as ac:
         yield ac
 
 
@@ -89,3 +64,46 @@ async def fourth_user_headers(client: AsyncClient):
     assert response.status_code == 200
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def cleanup_test_data(client):
+    """Cleanup test data after each test."""
+    global test_club_ids, test_session_ids
+    
+    # Reset tracking lists before test
+    test_club_ids = []
+    test_session_ids = []
+    
+    yield
+    
+    # Cleanup: Delete test sessions and clubs
+    # Note: Sessions and clubs are deleted in reverse order of dependencies
+    
+    # Delete test sessions first (depend on clubs)
+    for session_id in test_session_ids:
+        try:
+            await client.delete(f"/api/v1/sessions/{session_id}")
+        except Exception:
+            pass  # Ignore cleanup errors
+    
+    # Delete test clubs
+    for club_id in test_club_ids:
+        try:
+            await client.delete(f"/api/v1/clubs/{club_id}")
+        except Exception:
+            pass  # Ignore cleanup errors
+    
+    # Reset tracking lists
+    test_club_ids = []
+    test_session_ids = []
+
+
+def track_club(club_id: str):
+    """Track a club ID for cleanup."""
+    test_club_ids.append(club_id)
+
+
+def track_session(session_id: str):
+    """Track a session ID for cleanup."""
+    test_session_ids.append(session_id)
