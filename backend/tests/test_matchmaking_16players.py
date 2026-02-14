@@ -1,9 +1,10 @@
 import pytest
 import httpx
 import asyncio
+import os
 
-BASE_URL = "https://tofubadminton-backend.onrender.com"
-TEST_SECRET = "test-secret-for-ci-only-2024"
+BASE_URL = os.getenv("TEST_API_URL", os.getenv("TEST_TARGET_URL", "https://tofubadminton-backend.onrender.com"))
+TEST_SECRET = os.getenv("TEST_SECRET", "test-secret-for-ci-only-2024")
 
 # Track สร้างอะไรบ้างเพื่อ cleanup
 created_clubs = []
@@ -42,6 +43,8 @@ async def create_test_club(token: str, name: str):
             }
         )
         club = resp.json()
+        if resp.status_code != 201:
+            pytest.fail(f"Failed to create club: {resp.status_code} - {club}")
         created_clubs.append(club["id"])
         return club
 
