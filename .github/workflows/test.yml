@@ -22,7 +22,7 @@ jobs:
         env:
           ENV: testing
           SECRET_KEY: test-secret-key-for-ci-and-local-123456
-          DATABASE_URL: sqlite+aiosqlite:///./backend/tests/test.db
+          DATABASE_URL: sqlite+aiosqlite:///./tests/test.db
           REDIS_URL: ""
         run: make test-api
 
