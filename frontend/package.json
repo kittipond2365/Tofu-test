@@ -1,0 +1,13 @@
+{
+  "name": "tofu-e2e-tests",
+  "version": "1.0.0",
+  "description": "E2E tests for Tofu Badminton using Playwright",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.41.0",
+    "@types/node": "^20.11.0"
+  }
+}
