@@ -3,9 +3,17 @@ import os
 import pytest
 
 
+# Test secret for protection layer 2
+TEST_SECRET = "test-secret-for-ci-only-2024"
+
+
 @pytest.mark.asyncio
 async def test_test_login_enabled_in_testing(client):
-    response = await client.post("/api/v1/auth/test-login", json={"name": "Auth Tester"})
+    response = await client.post(
+        "/api/v1/auth/test-login", 
+        json={"name": "Auth Tester"},
+        headers={"X-Test-Secret": TEST_SECRET}
+    )
     assert response.status_code == 200
     payload = response.json()
     assert "access_token" in payload
@@ -15,7 +23,11 @@ async def test_test_login_enabled_in_testing(client):
 
 @pytest.mark.asyncio
 async def test_refresh_token_flow(client):
-    login = await client.post("/api/v1/auth/test-login", json={"name": "Refresh Tester"})
+    login = await client.post(
+        "/api/v1/auth/test-login", 
+        json={"name": "Refresh Tester"},
+        headers={"X-Test-Secret": TEST_SECRET}
+    )
     refresh_token = login.json()["refresh_token"]
 
     response = await client.post("/api/v1/auth/refresh", json={"refresh_token": refresh_token})
@@ -27,9 +39,19 @@ async def test_refresh_token_flow(client):
 
 
 @pytest.mark.asyncio
-async def test_test_login_disabled_outside_testing(client, monkeypatch):
-    monkeypatch.setenv("ENV", "production")
+async def test_test_login_disabled_without_secret(client):
     response = await client.post("/api/v1/auth/test-login", json={"name": "Blocked"})
     assert response.status_code == 403
-    assert response.json()["detail"] == "Test login disabled in production"
+
+
+@pytest.mark.asyncio
+async def test_test_login_disabled_outside_testing(client, monkeypatch):
+    monkeypatch.setenv("ENV", "production")
+    response = await client.post(
+        "/api/v1/auth/test-login", 
+        json={"name": "Blocked"},
+        headers={"X-Test-Secret": TEST_SECRET}
+    )
+    assert response.status_code == 403
+    assert "Test login disabled" in response.json()["detail"]
     monkeypatch.setenv("ENV", "testing")

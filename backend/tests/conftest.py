@@ -11,6 +11,9 @@ os.environ.setdefault("ENV", "testing")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-for-ci-and-local-123456")
 os.environ.setdefault("DATABASE_URL", f"sqlite+aiosqlite:///{TEST_DB_PATH}")
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
+os.environ.setdefault("TEST_SECRET", "test-secret-for-ci-only-2024")
+
+TEST_SECRET = "test-secret-for-ci-only-2024"
 
 from app.core.database import async_engine
 from app.main import base_app
@@ -42,7 +45,11 @@ async def client():
 
 @pytest_asyncio.fixture
 async def auth_headers(client: AsyncClient):
-    response = await client.post("/api/v1/auth/test-login", json={"name": "Test Admin"})
+    response = await client.post(
+        "/api/v1/auth/test-login",
+        json={"name": "Test Admin"},
+        headers={"X-Test-Secret": TEST_SECRET}
+    )
     assert response.status_code == 200
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
@@ -50,7 +57,11 @@ async def auth_headers(client: AsyncClient):
 
 @pytest_asyncio.fixture
 async def second_user_headers(client: AsyncClient):
-    response = await client.post("/api/v1/auth/test-login", json={"name": "Second User"})
+    response = await client.post(
+        "/api/v1/auth/test-login",
+        json={"name": "Second User"},
+        headers={"X-Test-Secret": TEST_SECRET}
+    )
     assert response.status_code == 200
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
@@ -58,7 +69,11 @@ async def second_user_headers(client: AsyncClient):
 
 @pytest_asyncio.fixture
 async def third_user_headers(client: AsyncClient):
-    response = await client.post("/api/v1/auth/test-login", json={"name": "Third User"})
+    response = await client.post(
+        "/api/v1/auth/test-login",
+        json={"name": "Third User"},
+        headers={"X-Test-Secret": TEST_SECRET}
+    )
     assert response.status_code == 200
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
@@ -66,7 +81,11 @@ async def third_user_headers(client: AsyncClient):
 
 @pytest_asyncio.fixture
 async def fourth_user_headers(client: AsyncClient):
-    response = await client.post("/api/v1/auth/test-login", json={"name": "Fourth User"})
+    response = await client.post(
+        "/api/v1/auth/test-login",
+        json={"name": "Fourth User"},
+        headers={"X-Test-Secret": TEST_SECRET}
+    )
     assert response.status_code == 200
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
