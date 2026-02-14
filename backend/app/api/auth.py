@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status, Header
 from fastapi.security import HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -65,11 +65,20 @@ import os
 @router.post("/auth/test-login")
 async def test_login(
     test_user: TestUserCreate,
+    request: Request,
+    x_test_secret: Optional[str] = Header(None, alias="X-Test-Secret"),
     db: AsyncSession = Depends(get_db)
 ):
-    """Create test user and return JWT (TESTING ONLY)"""
+    """Create test user and return JWT (TESTING ONLY - Multi-layer protection)"""
+    
+    # Layer 1: ENV check
     if os.getenv("ENV") != "testing":
-        raise HTTPException(status_code=403, detail="Test login disabled in production")
+        raise HTTPException(status_code=403, detail="Test login disabled")
+    
+    # Layer 2: Secret header check
+    expected_secret = os.getenv("TEST_SECRET")
+    if not expected_secret or x_test_secret != expected_secret:
+        raise HTTPException(status_code=403, detail="Invalid test secret")
 
     # Create or get test user
     line_user_id = test_user.line_user_id or f"test:{test_user.name.lower().replace(' ', '-')}"
