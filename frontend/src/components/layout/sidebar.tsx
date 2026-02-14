@@ -1,2 +1,0 @@
-import Link from 'next/link';
-export function Sidebar({ clubId }: { clubId: string }) { return <aside className="w-full space-y-2 md:w-64"><Link href={`/clubs/${clubId}`} className="block rounded p-2 hover:bg-gray-100">ภาพรวม</Link><Link href={`/clubs/${clubId}/sessions`} className="block rounded p-2 hover:bg-gray-100">Session</Link><Link href={`/clubs/${clubId}/leaderboard`} className="block rounded p-2 hover:bg-gray-100">อันดับ</Link></aside>; }

@@ -1,3 +1,0 @@
-"use client";
-import { useState } from 'react'; import { Button } from '@/components/ui/button'; import { Input } from '@/components/ui/input';
-export function ScoreBoard({ score, onSubmit }: { score?: string; onSubmit: (score: string, winner: 'A'|'B') => void }) { const [value, setValue] = useState(score || '21-18'); const [winner, setWinner] = useState<'A'|'B'>('A'); return <div className="space-y-2"><Input value={value} onChange={(e) => setValue(e.target.value)} placeholder="21-18,18-21,21-17" /><div className="flex gap-2"><Button variant="secondary" onClick={() => setWinner('A')}>Winner A</Button><Button variant="secondary" onClick={() => setWinner('B')}>Winner B</Button><Button onClick={() => onSubmit(value, winner)}>Update Score</Button></div></div>; }
