@@ -9,20 +9,11 @@ interface RatingPoint {
 }
 
 interface RatingTrendChartProps {
-  data?: RatingPoint[];
+  data: RatingPoint[];
   height?: number;
 }
 
-const defaultData: RatingPoint[] = [
-  { date: 'Jan', rating: 1000, matches: 5 },
-  { date: 'Feb', rating: 1025, matches: 8 },
-  { date: 'Mar', rating: 1010, matches: 6 },
-  { date: 'Apr', rating: 1045, matches: 10 },
-  { date: 'May', rating: 1030, matches: 7 },
-  { date: 'Jun', rating: 1060, matches: 12 },
-];
-
-export function RatingTrendChart({ data = defaultData, height = 250 }: RatingTrendChartProps) {
+export function RatingTrendChart({ data, height = 250 }: RatingTrendChartProps) {
   if (!data || data.length === 0) {
     return (
       <div className="flex items-center justify-center h-[250px] text-gray-400">

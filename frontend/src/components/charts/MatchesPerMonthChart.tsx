@@ -8,20 +8,11 @@ interface MonthData {
 }
 
 interface MatchesPerMonthChartProps {
-  data?: MonthData[];
+  data: MonthData[];
   height?: number;
 }
 
-const defaultData: MonthData[] = [
-  { month: 'ม.ค.', matches: 12 },
-  { month: 'ก.พ.', matches: 18 },
-  { month: 'มี.ค.', matches: 15 },
-  { month: 'เม.ย.', matches: 22 },
-  { month: 'พ.ค.', matches: 19 },
-  { month: 'มิ.ย.', matches: 25 },
-];
-
-export function MatchesPerMonthChart({ data = defaultData, height = 250 }: MatchesPerMonthChartProps) {
+export function MatchesPerMonthChart({ data, height = 250 }: MatchesPerMonthChartProps) {
   if (!data || data.length === 0) {
     return (
       <div className="flex items-center justify-center h-[250px] text-gray-400">

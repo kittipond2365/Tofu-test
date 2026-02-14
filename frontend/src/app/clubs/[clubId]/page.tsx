@@ -222,7 +222,13 @@ export default function ClubDetailPage({ params }: { params: { clubId: string } 
                 {/* Activity Chart */}
                 <div className="glass-card p-6">
                   <h3 className="text-lg font-bold text-neutral-900 mb-4">นัดตีล่าสุด</h3>
-                  <ClubActivityChart />
+                  {stats?.activity_data && stats.activity_data.length > 0 ? (
+                    <ClubActivityChart data={stats.activity_data} />
+                  ) : (
+                    <div className="h-[280px] flex items-center justify-center text-neutral-400">
+                      ยังไม่มีข้อมูลกิจกรรม
+                    </div>
+                  )}
                 </div>
 
                 {/* Recent Sessions */}

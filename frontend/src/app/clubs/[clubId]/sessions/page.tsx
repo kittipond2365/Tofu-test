@@ -76,18 +76,18 @@ export default function SessionsPage({ params }: { params: { clubId: string } })
       <main className="page-container">
         {/* Header */}
         <PageHeader
-          title="นัดตี"
-          subtitle={`นัดตีทั้งหมดของ ${club?.name || 'ก๊วน'}`}
+          title="Session"
+          subtitle={`Session ทั้งหมดของ ${club?.name || 'ก๊วน'}`}
           breadcrumbs={[
             { label: 'ก๊วน', href: '/clubs' },
             { label: club?.name || '', href: `/clubs/${params.clubId}` },
-            { label: 'นัดตี' },
+            { label: 'Session' },
           ]}
           action={
             <Link href={`/clubs/${params.clubId}/sessions/create`}>
               <Button>
                 <Plus className="w-4 h-4" />
-                <span className="hidden sm:inline">สร้างนัดตี</span>
+                <span className="hidden sm:inline">สร้าง Session</span>
               </Button>
             </Link>
           }
@@ -150,7 +150,7 @@ export default function SessionsPage({ params }: { params: { clubId: string } })
         {!isLoading && sessions && (
           <div className="flex items-center gap-4 text-sm text-neutral-500 mb-6">
             <span>
-              ทั้งหมด <strong className="text-neutral-900">{filteredSessions.length}</strong> นัดตี
+              ทั้งหมด <strong className="text-neutral-900">{filteredSessions.length}</strong> Session
             </span>
             {statusFilter !== 'all' && (
               <span className="text-emerald-600">
@@ -173,14 +173,14 @@ export default function SessionsPage({ params }: { params: { clubId: string } })
         {!isLoading && filteredSessions.length === 0 && (
           <EmptyState
             icon={CalendarIcon}
-            title={statusFilter !== 'all' ? 'ไม่พบนัดตี' : 'ยังไม่มีนัดตี'}
+            title={statusFilter !== 'all' ? 'ไม่พบ Session' : 'ยังไม่มี Session'}
             description={
               statusFilter !== 'all'
-                ? 'ลองเลือกสถานะอื่น หรือสร้างนัดตีใหม่'
-                : 'สร้างนัดตีแรกของก๊วน'
+                ? 'ลองเลือกสถานะอื่น หรือสร้าง Session ใหม่'
+                : 'สร้าง Session แรกของก๊วน'
             }
             action={{
-              label: 'สร้างนัดตี',
+              label: 'สร้าง Session',
               href: `/clubs/${params.clubId}/sessions/create`,
             }}
           />

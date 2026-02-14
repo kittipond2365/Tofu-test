@@ -17,7 +17,6 @@ import { apiClient } from '@/lib/api';
 import { ProtectedLayout } from '@/components/layout/protected-layout';
 import { Navbar } from '@/components/layout/navbar';
 import { PageHeader, EmptyState, PageSkeleton } from '@/components/shared';
-import { PlayerStatsRadar } from '@/components/charts';
 import { Button } from '@/components/ui/button';
 import type { PlayerStatsResponse } from '@/lib/types';
 
@@ -195,30 +194,6 @@ export default function LeaderboardPage({ params }: { params: { clubId: string }
                     />
                   )}
                 </div>
-              </div>
-            )}
-
-            {/* Charts Section */}
-            {top3.length > 0 && (
-              <div className="grid md:grid-cols-3 gap-6">
-                {top3.map((player) => (
-                  <div key={player.user_id} className="glass-card p-6">
-                    <h4 className="text-center font-semibold text-neutral-900 mb-2">
-                      {player.display_name || player.full_name}
-                    </h4>
-                    <PlayerStatsRadar
-                      height={200}
-                      data={[
-                        { category: 'Attack', value: 70 + Math.random() * 30, fullMark: 100 },
-                        { category: 'Defense', value: 60 + Math.random() * 40, fullMark: 100 },
-                        { category: 'Speed', value: 65 + Math.random() * 35, fullMark: 100 },
-                        { category: 'Stamina', value: 55 + Math.random() * 45, fullMark: 100 },
-                        { category: 'Technique', value: 75 + Math.random() * 25, fullMark: 100 },
-                        { category: 'Mental', value: 80 + Math.random() * 20, fullMark: 100 },
-                      ]}
-                    />
-                  </div>
-                ))}
               </div>
             )}
 

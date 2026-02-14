@@ -9,22 +9,13 @@ interface PlayerStats {
 }
 
 interface PlayerStatsRadarProps {
-  data?: PlayerStats[];
+  data: PlayerStats[];
   height?: number;
   playerName?: string;
 }
 
-const defaultData: PlayerStats[] = [
-  { category: 'Attack', value: 85, fullMark: 100 },
-  { category: 'Defense', value: 70, fullMark: 100 },
-  { category: 'Speed', value: 90, fullMark: 100 },
-  { category: 'Stamina', value: 75, fullMark: 100 },
-  { category: 'Technique', value: 80, fullMark: 100 },
-  { category: 'Mental', value: 88, fullMark: 100 },
-];
-
 export function PlayerStatsRadar({ 
-  data = defaultData, 
+  data, 
   height = 300,
   playerName 
 }: PlayerStatsRadarProps) {

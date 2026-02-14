@@ -16,4 +16,6 @@ export interface MatchResponse { id: string; session_id: string; court_number: n
 export interface RatingHistoryPoint { date: string; rating: number; matches: number; }
 export interface MatchesPerMonthPoint { month: string; matches: number; }
 export interface PlayerStatsResponse { user_id: string; full_name: string; display_name?: string; avatar_url?: string; total_matches: number; wins: number; losses: number; win_rate: number; rating: number; matches_this_month: number; rating_history?: RatingHistoryPoint[]; matches_per_month?: MatchesPerMonthPoint[]; }
-export interface ClubStatsResponse { club_id: string; club_name: string; total_members: number; total_sessions: number; total_matches: number; top_players: PlayerStatsResponse[]; recent_sessions: SessionResponse[]; }
+export interface ActivityDataPoint { date: string; sessions: number; participants: number; matches: number; }
+
+export interface ClubStatsResponse { club_id: string; club_name: string; total_members: number; total_sessions: number; total_matches: number; top_players: PlayerStatsResponse[]; recent_sessions: SessionResponse[]; activity_data?: ActivityDataPoint[]; }

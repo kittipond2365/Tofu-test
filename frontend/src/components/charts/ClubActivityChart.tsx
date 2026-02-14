@@ -10,21 +10,11 @@ interface ActivityData {
 }
 
 interface ClubActivityChartProps {
-  data?: ActivityData[];
+  data: ActivityData[];
   height?: number;
 }
 
-const defaultData: ActivityData[] = [
-  { date: '1 มิ.ย.', sessions: 2, participants: 24, matches: 12 },
-  { date: '5 มิ.ย.', sessions: 1, participants: 12, matches: 6 },
-  { date: '8 มิ.ย.', sessions: 3, participants: 36, matches: 18 },
-  { date: '12 มิ.ย.', sessions: 2, participants: 28, matches: 14 },
-  { date: '15 มิ.ย.', sessions: 1, participants: 16, matches: 8 },
-  { date: '19 มิ.ย.', sessions: 2, participants: 30, matches: 15 },
-  { date: '22 มิ.ย.', sessions: 3, participants: 42, matches: 21 },
-];
-
-export function ClubActivityChart({ data = defaultData, height = 280 }: ClubActivityChartProps) {
+export function ClubActivityChart({ data, height = 280 }: ClubActivityChartProps) {
   if (!data || data.length === 0) {
     return (
       <div className="flex items-center justify-center h-[280px] text-gray-400">
