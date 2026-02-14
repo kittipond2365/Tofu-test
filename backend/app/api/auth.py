@@ -53,6 +53,53 @@ class RefreshRequest(BaseModel):
     refresh_token: str
 
 
+class TestUserCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    line_user_id: Optional[str] = Field(None, max_length=255)
+    email: Optional[EmailStr] = None
+
+
+import os
+
+
+@router.post("/auth/test-login")
+async def test_login(
+    test_user: TestUserCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """Create test user and return JWT (TESTING ONLY)"""
+    if os.getenv("ENV") != "testing":
+        raise HTTPException(status_code=403, detail="Test login disabled in production")
+
+    # Create or get test user
+    line_user_id = test_user.line_user_id or f"test:{test_user.name.lower().replace(' ', '-')}"
+
+    result = await db.execute(select(User).where(User.line_user_id == line_user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        user = User(
+            id=str(uuid.uuid4()),
+            line_user_id=line_user_id,
+            email=test_user.email,
+            hashed_password=None,
+            full_name=test_user.name,
+            display_name=test_user.name,
+            is_verified=True,
+            created_at=datetime.utcnow(),
+        )
+        db.add(user)
+        await db.flush()
+
+    access_token = create_access_token(data={"sub": user.id, "email": user.email or ""})
+    refresh_token = create_refresh_token(data={"sub": user.id})
+
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "user": user
+    }
+
+
 @router.post("/auth/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
     """Register a new user"""
