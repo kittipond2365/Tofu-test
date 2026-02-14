@@ -40,7 +40,7 @@ jobs:
 
       - name: Run E2E tests
         env:
-          TEST_URL: https://tofubadminton-frontend.onrender.com
+          TEST_URL: https://tofubadminton.onrender.com
         run: make test-e2e
 
       - name: Upload reports
