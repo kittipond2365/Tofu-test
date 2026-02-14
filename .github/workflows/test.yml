@@ -18,6 +18,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt
 
+      - name: Start test server
+        env:
+          ENV: testing
+          SECRET_KEY: test-secret-key-for-ci-and-local-123456
+          DATABASE_URL: sqlite+aiosqlite:///./tests/test.db
+          REDIS_URL: redis://localhost:6379/0
+          TEST_SECRET: test-secret-for-ci-only-2024
+        run: |
+          cd backend
+          python -c "import asyncio; from app.core.database import init_db; asyncio.run(init_db())"
+          python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --env-file /dev/null &
+          sleep 3
+          curl -s http://127.0.0.1:8000/api/v1/health || echo "Health check failed"
+
       - name: Run API tests
         env:
           ENV: testing
@@ -25,6 +39,7 @@ jobs:
           DATABASE_URL: sqlite+aiosqlite:///./tests/test.db
           REDIS_URL: redis://localhost:6379/0
           TEST_SECRET: test-secret-for-ci-only-2024
+          TEST_API_URL: http://127.0.0.1:8000
         run: make test-api
 
       - name: Setup Node
