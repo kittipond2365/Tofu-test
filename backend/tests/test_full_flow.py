@@ -1,10 +1,18 @@
 import pytest
 
 
+# Test secret for protection layer 2
+TEST_SECRET = "test-secret-for-ci-only-2024"
+
+
 @pytest.mark.asyncio
 async def test_complete_user_journey(client):
     # 1) Login user A
-    login_a = await client.post("/api/v1/auth/test-login", json={"name": "User A"})
+    login_a = await client.post(
+        "/api/v1/auth/test-login",
+        json={"name": "User A"},
+        headers={"X-Test-Secret": TEST_SECRET}
+    )
     assert login_a.status_code == 200
     token_a = login_a.json()["access_token"]
     headers_a = {"Authorization": f"Bearer {token_a}"}
@@ -32,7 +40,11 @@ async def test_complete_user_journey(client):
     assert opened.status_code == 200
 
     # 5) Login user B, join club, register session
-    login_b = await client.post("/api/v1/auth/test-login", json={"name": "User B"})
+    login_b = await client.post(
+        "/api/v1/auth/test-login",
+        json={"name": "User B"},
+        headers={"X-Test-Secret": TEST_SECRET}
+    )
     token_b = login_b.json()["access_token"]
     headers_b = {"Authorization": f"Bearer {token_b}"}
 
