@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     def DATABASE_URL(self) -> str:
         """URL for async operations (asyncpg)"""
         url = self.DATABASE_URL_RAW
+        # Support SQLite for local testing
+        if url.startswith("sqlite"):
+            return url
         # Convert postgres:// or postgresql:// to postgresql+asyncpg://
         if url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql+asyncpg://", 1)
@@ -31,6 +34,9 @@ class Settings(BaseSettings):
     def DATABASE_URL_SYNC(self) -> str:
         """URL for sync operations (alembic, direct SQL) - uses psycopg2"""
         url = self.DATABASE_URL_RAW
+        # Support SQLite for local testing
+        if url.startswith("sqlite"):
+            return url
         # Convert to postgresql+psycopg2://
         if url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql+psycopg2://", 1)

@@ -25,6 +25,11 @@ const statusConfig: Record<SessionStatus, {
     className: 'bg-gray-100 text-gray-700',
     description: 'นัดตียังไม่เปิดให้สมัคร'
   },
+  upcoming: { 
+    label: 'เร็วๆ นี้', 
+    className: 'bg-blue-100 text-blue-700',
+    description: 'นัดตีจะเปิดให้สมัครเร็วๆ นี้'
+  },
   open: { 
     label: 'เปิดรับสมัคร', 
     className: 'bg-green-100 text-green-700',
@@ -34,6 +39,11 @@ const statusConfig: Record<SessionStatus, {
     label: 'เต็ม', 
     className: 'bg-amber-100 text-amber-700',
     description: 'ผู้เข้าร่วมเต็มแล้ว สามารถเข้าคิวรอได้'
+  },
+  active: { 
+    label: 'กำลังดำเนินการ', 
+    className: 'bg-purple-100 text-purple-700',
+    description: 'นัดตีกำลังดำเนินการอยู่'
   },
   ongoing: { 
     label: 'กำลังแข่ง', 

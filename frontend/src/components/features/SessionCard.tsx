@@ -35,6 +35,11 @@ const statusConfig: Record<
     className: 'badge-neutral',
     icon: HelpCircle,
   },
+  upcoming: {
+    label: 'เร็วๆ นี้',
+    className: 'badge-blue',
+    icon: Clock,
+  },
   open: {
     label: 'เปิดรับ',
     className: 'badge-emerald',
@@ -44,6 +49,11 @@ const statusConfig: Record<
     label: 'เต็ม',
     className: 'badge-amber',
     icon: Users,
+  },
+  active: {
+    label: 'กำลังดำเนินการ',
+    className: 'badge-purple',
+    icon: Clock,
   },
   ongoing: {
     label: 'กำลังแข่ง',
