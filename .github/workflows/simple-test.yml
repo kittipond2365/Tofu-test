@@ -1,12 +1,84 @@
-name: Simple Test
+name: Test After Deploy
 
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: '0 */6 * * *'  # Every 6 hours
   workflow_dispatch:
 
 jobs:
-  test-backend:
+  wait-for-deploy:
+    runs-on: ubuntu-latest
+    outputs:
+      backend_ready: ${{ steps.check-backend.outputs.ready }}
+      frontend_ready: ${{ steps.check-frontend.outputs.ready }}
+    steps:
+      - name: Wait for Backend Deploy
+        id: check-backend
+        run: |
+          SERVICE_ID="${{ secrets.RENDER_BACKEND_SERVICE }}"
+          TOKEN="${{ secrets.RENDER_TOKEN }}"
+          MAX_WAIT=300  # 5 minutes max
+          INTERVAL=10   # Check every 10 seconds
+          
+          for ((i=0; i<MAX_WAIT; i+=INTERVAL)); do
+            STATUS=$(curl -s -H "Authorization: Bearer $TOKEN" \
+              "https://api.render.com/v1/services/$SERVICE_ID/deploys?limit=1" | \
+              jq -r '.[0].deploy.status // "unknown"')
+            
+            echo "Backend status: $STATUS (waited ${i}s)"
+            
+            if [ "$STATUS" = "live" ]; then
+              echo "ready=true" >> $GITHUB_OUTPUT
+              exit 0
+            elif [ "$STATUS" = "build_failed" ] || [ "$STATUS" = "update_failed" ]; then
+              echo "ready=false" >> $GITHUB_OUTPUT
+              echo "❌ Backend deploy failed"
+              exit 1
+            fi
+            
+            sleep $INTERVAL
+          done
+          
+          echo "ready=false" >> $GITHUB_OUTPUT
+          echo "❌ Backend deploy timeout"
+          exit 1
+
+      - name: Wait for Frontend Deploy
+        id: check-frontend
+        run: |
+          SERVICE_ID="${{ secrets.RENDER_FRONTEND_SERVICE }}"
+          TOKEN="${{ secrets.RENDER_TOKEN }}"
+          MAX_WAIT=300
+          INTERVAL=10
+          
+          for ((i=0; i<MAX_WAIT; i+=INTERVAL)); do
+            STATUS=$(curl -s -H "Authorization: Bearer $TOKEN" \
+              "https://api.render.com/v1/services/$SERVICE_ID/deploys?limit=1" | \
+              jq -r '.[0].deploy.status // "unknown"')
+            
+            echo "Frontend status: $STATUS (waited ${i}s)"
+            
+            if [ "$STATUS" = "live" ]; then
+              echo "ready=true" >> $GITHUB_OUTPUT
+              exit 0
+            elif [ "$STATUS" = "build_failed" ] || [ "$STATUS" = "update_failed" ]; then
+              echo "ready=false" >> $GITHUB_OUTPUT
+              echo "❌ Frontend deploy failed"
+              exit 1
+            fi
+            
+            sleep $INTERVAL
+          done
+          
+          echo "ready=false" >> $GITHUB_OUTPUT
+          echo "❌ Frontend deploy timeout"
+          exit 1
+
+  test-api:
+    needs: wait-for-deploy
+    if: ${{ needs.wait-for-deploy.outputs.backend_ready == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,23 +96,80 @@ jobs:
       - name: Run API tests
         env:
           ENV: testing
-          SECRET_KEY: test-secret-key
+          SECRET_KEY: test-secret-key-for-ci-only-2024
           DATABASE_URL: sqlite+aiosqlite:///./tests/test.db
+          REDIS_URL: ""
           TEST_SECRET: test-secret-for-ci-only-2024
         run: |
           cd backend
-          PYTHONPATH=. ENV=testing pytest tests/test_auth.py -v
-        continue-on-error: true
-      
+          PYTHONPATH=. ENV=testing pytest tests/ -v --tb=short 2>&1 | tee test-output.txt
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-test-results
+          path: backend/test-output.txt
+
+  test-e2e:
+    needs: [wait-for-deploy, test-api]
+    if: ${{ needs.wait-for-deploy.outputs.frontend_ready == 'true' && needs.test-api.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright
+        run: |
+          cd frontend
+          npm install
+          npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        env:
+          TEST_URL: https://tofubadminton.onrender.com
+        run: |
+          cd frontend
+          npx playwright test --reporter=list 2>&1 | tee test-output.txt
+
+      - name: Upload E2E results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+            frontend/test-output.txt
+
+  notify-on-failure:
+    needs: [wait-for-deploy, test-api, test-e2e]
+    if: ${{ failure() }}
+    runs-on: ubuntu-latest
+    steps:
       - name: Create issue on failure
-        if: failure()
         uses: actions/github-script@v7
         with:
           script: |
+            const failedJobs = [];
+            if ('${{ needs.wait-for-deploy.result }}' === 'failure') {
+              failedJobs.push('Deploy failed');
+            }
+            if ('${{ needs.test-api.result }}' === 'failure') {
+              failedJobs.push('API tests failed');
+            }
+            if ('${{ needs.test-e2e.result }}' === 'failure') {
+              failedJobs.push('E2E tests failed');
+            }
+            
             github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: '❌ Test Failed - ' + new Date().toISOString(),
-              body: 'Tests failed. Please check the logs.',
+              title: '❌ Tests Failed - ' + new Date().toISOString(),
+              body: `## Test Failure Report\n\n**Failed Jobs:**\n${failedJobs.map(j => '- ' + j).join('\n')}\n\n**Commit:** ${context.sha}\n\n**Instructions for Agent:**\n1. Check artifacts for logs\n2. Analyze the failure\n3. Fix in tofubadminton repo\n4. Push fix\n5. Tests will re-run automatically`,
               labels: ['test-failed', 'auto-fix']
             });
