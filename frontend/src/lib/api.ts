@@ -4,15 +4,64 @@ import type { ClubDetailResponse, ClubResponse, ClubStatsResponse, MatchResponse
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 export const api = axios.create({ baseURL: API_URL });
+
 api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().token;
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
+let isRefreshing = false;
+let refreshPromise: Promise<string | null> | null = null;
+
+const refreshAccessToken = async (): Promise<string | null> => {
+  const { refreshToken, setTokens, logout } = useAuthStore.getState();
+  if (!refreshToken) return null;
+
+  try {
+    const response = await axios.post(`${API_URL}/auth/refresh`, { refresh_token: refreshToken });
+    const { access_token, refresh_token } = response.data as TokenResponse;
+    setTokens(access_token, refresh_token);
+    return access_token;
+  } catch {
+    logout();
+    return null;
+  }
+};
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    const status = error?.response?.status;
+
+    const isAuthRoute = originalRequest?.url?.includes('/auth/login') || originalRequest?.url?.includes('/auth/refresh');
+
+    if (status === 401 && originalRequest && !originalRequest._retry && !isAuthRoute) {
+      originalRequest._retry = true;
+
+      if (!isRefreshing) {
+        isRefreshing = true;
+        refreshPromise = refreshAccessToken().finally(() => {
+          isRefreshing = false;
+        });
+      }
+
+      const newToken = await refreshPromise;
+      if (newToken) {
+        originalRequest.headers = originalRequest.headers || {};
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return api(originalRequest);
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 export const apiClient = {
   baseURL: API_URL,
-  
+
   login: async (credentials: { email: string; password: string }): Promise<TokenResponse> => (await api.post('/auth/login', credentials)).data,
   register: async (data: { email: string; password: string; full_name: string; display_name?: string; phone?: string; picture_url?: string }): Promise<UserResponse> => (await api.post('/auth/register', data)).data,
   getMe: async (): Promise<UserResponse> => (await api.get('/auth/me')).data,
@@ -52,7 +101,7 @@ export const apiClient = {
   getClubStats: async (clubId: string): Promise<ClubStatsResponse> => (await api.get(`/clubs/${clubId}/stats`)).data,
   getLeaderboard: async (clubId: string): Promise<PlayerStatsResponse[]> => (await api.get(`/clubs/${clubId}/leaderboard`)).data,
   getUserStats: async (userId: string): Promise<PlayerStatsResponse> => (await api.get(`/users/${userId}/stats`)).data,
-  
+
   // Profile
   updateProfile: async (data: { display_name?: string; full_name?: string; email?: string; phone?: string }): Promise<UserResponse> => (await api.patch('/auth/me', data)).data,
 };
