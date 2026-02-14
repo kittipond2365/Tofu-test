@@ -3,6 +3,11 @@ name: Test After Deploy
 on:
   push:
     branches: [main]
+  schedule:
+    # Run every hour
+    - cron: '0 * * * *'
+  repository_dispatch:
+    types: [deploy-completed]
   workflow_dispatch:
 
 jobs:
