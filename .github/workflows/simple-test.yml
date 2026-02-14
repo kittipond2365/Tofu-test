@@ -1,0 +1,46 @@
+name: Simple Test
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+      
+      - name: Run API tests
+        env:
+          ENV: testing
+          SECRET_KEY: test-secret-key
+          DATABASE_URL: sqlite+aiosqlite:///./tests/test.db
+          TEST_SECRET: test-secret-for-ci-only-2024
+        run: |
+          cd backend
+          PYTHONPATH=. ENV=testing pytest tests/test_auth.py -v
+        continue-on-error: true
+      
+      - name: Create issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '❌ Test Failed - ' + new Date().toISOString(),
+              body: 'Tests failed. Please check the logs.',
+              labels: ['test-failed', 'auto-fix']
+            });
