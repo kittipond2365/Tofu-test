@@ -9,6 +9,11 @@ on:
     types: [deploy-completed]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
 jobs:
   wait-for-deploy:
     runs-on: ubuntu-latest
