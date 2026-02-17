@@ -154,6 +154,8 @@ jobs:
     needs: [wait-for-deploy, test-api, test-e2e]
     if: ${{ failure() }}
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
     steps:
       - name: Create issue on failure
         uses: actions/github-script@v7
